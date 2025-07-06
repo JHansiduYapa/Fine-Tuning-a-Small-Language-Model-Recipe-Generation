@@ -1,1 +1,1 @@
-# Fine-Tuning-a-Small-Language-Model-Recipe-Generation
+# Fine-Tuning-a-Small-Language-Model-for-Cypher-Query-Generation
