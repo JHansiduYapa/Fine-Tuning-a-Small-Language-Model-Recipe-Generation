@@ -2,21 +2,22 @@
 
 # Fine-Tuning a Small Language Model for Cypher Query Generation
 
-This project fine-tunes [Unsloth's Gemma-3 4B IT 4-bit model](https://huggingface.co/unsloth/gemma-3-4b-it-unsloth-bnb-4bit) to generate Cypher queries from natural language inputs. It uses LoRA-based fine-tuning with 4-bit quantization for efficient training on limited hardware.
+This project fine-tunes [Unsloth's Gemma-3 4B IT 4-bit model](https://huggingface.co/unsloth/gemma-3-4b-it-unsloth-bnb-4bit) to generate Cypher queries from natural language inputs. The training process leverages 4-bit quantization and LoRA for efficient learning on limited hardware.
 
 ---
 
 ## Objective
 
-Train a compact and efficient language model that converts natural language questions into valid Cypher queries for use with graph databases like Neo4j.
+Train a compact and efficient language model that translates natural language questions into valid Cypher queries for Neo4j-style graph databases.
 
 ---
 
 ## Project Contents
 
-* `v1.1-fine-tune-slm-for-cypher-query-generation.ipynb`: Main notebook for preprocessing, fine-tuning, and evaluating the model.
-* `dataset.jsonl` or similar: Plain text dataset containing (question, Cypher) examples formatted into a single text field.
-* `outputs/`: Automatically created during training to store model checkpoints and logs.
+* `notebooks` – Data preparation and model fine-tuning notebooks
+* `baseline_outputs.csv` – Output from the baseline Gemini model
+* `inference_outputs.csv` – Output from the fine-tuned model
+* `inference_results_ht.csv` – Outputs from hyperparameter-tuned model variants
 
 ---
 
@@ -123,10 +124,10 @@ pip install unsloth transformers datasets trl peft accelerate bitsandbytes
 
 ## Highlights
 
-* 4-bit quantized model for memory efficiency
-* LoRA tuning with minimal trainable parameters
-* Gradient checkpointing using `unsloth`
-* Fast fine-tuning using TRL’s `SFTTrainer`
+* 4-bit quantized model for efficient memory usage
+* LoRA tuning for parameter-efficient fine-tuning
+* Native support for gradient checkpointing (`unsloth`)
+* Fast training with TRL’s `SFTTrainer`
 
 ---
 
