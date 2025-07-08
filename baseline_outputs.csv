@@ -1,0 +1,487 @@
+reference,gemini_inference
+"MATCH (s:Supplier)-[:SUPPLIES]->(p:Product) WITH s, avg(p.unitPrice) AS avgUnitPrice ORDER BY avgUnitPrice DESC LIMIT 5 RETURN s.companyName AS Supplier, avgUnitPrice AS AverageUnitPrice","MATCH (s:Supplier)-[:SUPPLIES]->(p:Product)
+RETURN s.companyName AS SupplierName, avg(p.unitPrice) AS AverageUnitPrice
+ORDER BY AverageUnitPrice DESC
+LIMIT 5"
+MATCH (t:Technician) WHERE NOT EXISTS ((:RepairAssignment)-[:ASSIGNED_TO]->(t)) RETURN t.Name,"MATCH (t:Technician)
+WHERE NOT EXISTS {
+  (ra:RepairAssignment)-[:ASSIGNED_TO]->(t),
+  (ra)-[:ASSIGNED_TO]->(:Machine)
+}
+RETURN t.Name"
+"MATCH (n:Topic) WHERE NOT n.label STARTS WITH 'P' RETURN DISTINCT n.label AS label, n.description AS description","MATCH (t:Topic)
+WHERE NOT t.label STARTS WITH 'P'
+RETURN DISTINCT t.label, t.description"
+MATCH (c:Company) RETURN count(c),"MATCH (c:Company)
+RETURN count(c)"
+MATCH (a:Article)-[:MENTIONS]->(o:Organization {name: 'New Energy Group'}) RETURN a,"MATCH (a:Article)-[:MENTIONS]->(o:Organization)
+WHERE o.name = 'New Energy Group'
+RETURN a"
+"MATCH (n:District) WHERE n.City_Population >= 200000 AND n.City_Population <= 2000000 RETURN n.District_name, n.City_Population","MATCH (d:District)
+WHERE d.City_Population >= 200000 AND d.City_Population <= 2000000
+RETURN d.District_name, d.City_Population"
+MATCH (n:Article) -[:PUBLISHED_IN{pages: '1-31'}]->(m:Journal) WHERE m.title < date('2020-12-31') RETURN avg(m.name) AS avg_name,"MATCH (a:Article)-[r:PUBLISHED_IN]->(j:Journal)
+WHERE r.pages = '1-31'
+  AND date(a.title) < date('2020-12-31')
+RETURN avg(size(j.name)) AS averageJournalNameLength"
+"MATCH (t1:hiring)-[]-(t2:shop) WITH t2, count(t1.Shop_ID) AS cnt RETURN t2.Name ORDER BY cnt DESC LIMIT 1","MATCH (s:shop)-[:hiring]->(e:employee)
+WITH s, COUNT(e) AS num_employees_hired
+ORDER BY num_employees_hired DESC
+LIMIT 1
+RETURN s.name"
+"MATCH (d:domain {name: 'Robotics'})<-[:paper_in_domain]-(p:paper)-[:paper_in_venue]->(c:conference)<-[:author_in_affiliation]-(a:author)-[:author_in_affiliation]->(aff:affiliation {name: 'Tsinghua University'}) RETURN c.name, COUNT(p) AS num_papers ORDER BY num_papers DESC","MATCH (c:conference)<-[:paper_in_venue]-(p:paper)-[:paper_in_domain]->(d:domain)
+WHERE d.name = 'Robotics'
+MATCH (p)<-[:author_write_paper]-(a:author)-[:author_in_affiliation]->(af:affiliation)
+WHERE af.name = 'Tsinghua University'
+WITH c, COUNT(DISTINCT p) AS num_papers
+ORDER BY num_papers DESC
+LIMIT 1
+RETURN c.name AS conference_name, num_papers"
+"MATCH (m:Musical) WHERE m.Award <> ""Tony Award"" RETURN DISTINCT m.Nominee","MATCH (m:Musical)
+WHERE m.Award <> ""Tony Award""
+RETURN DISTINCT m.Nominee"
+"MATCH (n:Article) -[:HAS_DOI]->(m:DOI) WITH DISTINCT n, m RETURN n.abstract AS abstract, count(m) AS count LIMIT 20","MATCH (a:Article)-[:HAS_DOI]->(d:DOI)
+WITH a, count(d) AS doiCount
+RETURN a.abstract, doiCount
+LIMIT 20"
+"MATCH (m:Movie)-[:IN_GENRE]->(g:Genre) WITH g, avg(m.revenue) AS avg_revenue ORDER BY avg_revenue ASC LIMIT 3 RETURN g.name AS genre, avg_revenue","MATCH (movie:Movie)-[:IN_GENRE]->(genre:Genre)
+WHERE movie.revenue IS NOT NULL
+RETURN genre.name AS genreName, avg(movie.revenue) AS averageRevenue
+ORDER BY averageRevenue ASC
+LIMIT 3"
+"MATCH (user:User)-[:VIP]->(stream:Stream) WITH user, count(DISTINCT stream) AS vip_stream_count WHERE vip_stream_count >= 3 MATCH (user)-[:MODERATOR]->(:Stream) RETURN count(DISTINCT user) AS vip_moderator_count","MATCH (u:User)-[:VIP]->(vipStream:Stream)
+WITH u, COUNT(DISTINCT vipStream) AS vipStreamCount
+WHERE vipStreamCount >= 3
+MATCH (u)-[:MODERATOR]->(modStream:Stream)
+WITH u, COUNT(DISTINCT modStream) AS modStreamCount
+WHERE modStreamCount >= 1
+RETURN COUNT(DISTINCT u) AS total_users"
+MATCH (t:Tweet) RETURN t.id ORDER BY t.created_at ASC LIMIT 1,"MATCH (t:Tweet)
+RETURN t.id
+ORDER BY t.created_at ASC
+LIMIT 1"
+"MATCH (p:Product) WITH p.Product_Type_Code AS Product_Type_Code, COUNT(p) as count WHERE count >= 2 RETURN Product_Type_Code","MATCH (p:Product)
+WITH p.Product_Type_Code AS productTypeCode, COLLECT(p) AS products
+WHERE SIZE(products) >= 2
+RETURN productTypeCode"
+"MATCH (n:Article) -[r:PUBLISHED_IN]->(m:Journal) WHERE r.year='2000' WITH DISTINCT n, m RETURN n.title AS title, count(m) AS count LIMIT 20","MATCH (a:Article)-[r:PUBLISHED_IN]->(j:Journal)
+WHERE r.year = '2000'
+WITH a, count(DISTINCT j) AS journalCount
+RETURN a.title, journalCount
+LIMIT 20"
+"MATCH (neo4j:Me {screen_name: 'neo4j'})<-[:FOLLOWS]-(user:User) RETURN user.screen_name, user.name, user.followers, user.following, user.profile_image_url, user.url, user.location, user.statuses ORDER BY user.followers DESC LIMIT 5","MATCH (u:User)-[:FOLLOWS]->(m:Me {name: 'Neo4j'})
+RETURN u.screen_name, u.name
+LIMIT 5"
+"MATCH (p:Patient)-[:HAS_ALLERGY]->(:Allergy),       (p)-[:HAS_DOCTOR]->(smith:Doctor {name: 'Dr. Smith'})-[:GAVE_DIAGNOSIS]->(diagnosis:Diagnosis)<-[:HAS_DIAGNOSIS]-(p) RETURN COUNT(distinct p) as PatientsNum","MATCH (doctor:Doctor {name: ""Dr. Smith""})-[:GAVE_DIAGNOSIS]->(diagnosis:Diagnosis)<-[:HAS_DIAGNOSIS]-(patient:Patient)
+WHERE EXISTS { (patient)-[:HAS_ALLERGY]->(:Allergy) }
+RETURN count(DISTINCT patient)"
+"MATCH (c:Campus) WHERE c.Location = ""Northridge"" AND c.County = ""Los Angeles"" OR c.Location = ""San Francisco"" AND c.County = ""San Francisco"" RETURN c.Campus","MATCH (c:Campus)
+WHERE (c.Location = 'Northridge' AND c.County = 'Los Angeles') OR (c.Location = 'San Francisco' AND c.County = 'San Francisco')
+RETURN c.Campus"
+MATCH (me:Me)-[:AMPLIFIES]->(user:User) RETURN user.screen_name AS AmplifiedUser,"MATCH (m:Me)-[:AMPLIFIES]->(u:User)
+RETURN u.screen_name"
+"MATCH (me:Me {name: 'Neo4j'})-[:FOLLOWS]->(user:User) RETURN user.name, user.screen_name, user.followers, user.following ORDER BY user.followers DESC LIMIT 5","MATCH (u:User {name: 'Neo4j'})-[:FOLLOWS]->(followedUser:User)
+RETURN followedUser.name AS followedUserName
+LIMIT 5"
+MATCH (n:Article) -[:HAS_DOI]->(m:DOI) WHERE n.article_id = 1006 RETURN properties(m) AS props,"MATCH (a:Article {article_id: 1006})-[:HAS_DOI]->(d:DOI)
+RETURN properties(d)"
+MATCH (a:UpdateDate{update_date:'2010-06-18'})-[*]->(n) RETURN DISTINCT properties(n) AS Properties,"MATCH (u:UpdateDate {update_date: date('2010-06-18')})-[*]-(n)
+WHERE n <> u
+RETURN DISTINCT properties(n)"
+MATCH (c:CatalogContent) WHERE c.next_entry_id > 8 RETURN c.catalog_entry_name,"MATCH (c:CatalogContent)
+WHERE c.next_entry_id > 8
+RETURN c.catalog_entry_name"
+MATCH (u:User)-[:CHATTER]->(s:Stream)-[:VIP]->(u) RETURN avg(u.followers),"MATCH (u:User)-[:CHATTER]->(s:Stream), (u)-[:VIP]->(s)
+RETURN avg(s.followers)"
+"MATCH (q:Question) RETURN q.title, q.score ORDER BY q.score ASC LIMIT 3","MATCH (q:Question)
+RETURN q
+ORDER BY q.score ASC
+LIMIT 3"
+MATCH (a:DOI)-[*3]->(n) WHERE a.name = '10.1016/S0764-4442(00)00217-2' RETURN properties(n) AS props,"MATCH (d:DOI {name: '10.1016/S0764-4442(00)00217-2'})-[*3]-(n)
+RETURN properties(n)"
+"MATCH (a:Article)-[:MENTIONS]->(o:Organization) WHERE a.sentiment < 0 WITH o, min(o.revenue) AS minRevenue RETURN o.name AS Organization, minRevenue ORDER BY minRevenue ASC LIMIT 1","MATCH (org:Organization)<-[:MENTIONS]-(article:Article)
+WHERE article.sentiment < 0
+WITH org
+ORDER BY org.revenue ASC
+LIMIT 1
+RETURN org.name"
+"MATCH (c:Customer)-[:PURCHASED]->(o:Order)-[orders:ORDERS]->(p:Product) WITH c, o, sum(toFloat(orders.unitPrice) * orders.quantity) AS totalOrderValue WITH c, max(totalOrderValue) AS maxTotalOrderValue, collect(o.shipCity) AS shipCities WHERE size(shipCities) > 0 RETURN c.customerID, shipCities[0] AS shipCity ORDER BY maxTotalOrderValue DESC LIMIT 1","MATCH (c:Customer)-[:PURCHASED]->(o:Order)-[r:ORDERS]->(p:Product)
+WITH c.customerID AS customerID, o.shipCity AS shipCity, toFloat(r.unitPrice) * r.quantity AS itemValue
+WITH customerID, shipCity, SUM(itemValue) AS orderTotal
+WITH customerID, COLLECT(DISTINCT shipCity) AS distinctShipCities, SUM(orderTotal) AS totalCustomerValue
+ORDER BY totalCustomerValue DESC
+LIMIT 1
+RETURN customerID, distinctShipCities[0] AS shipCity"
+MATCH (e:Event) RETURN e.Name ORDER BY e.Year DESC LIMIT 1,"MATCH (e:Event)
+RETURN e.Name
+ORDER BY e.Year DESC
+LIMIT 1"
+"MATCH (n:Article) -[r:PUBLISHED_IN]->(m:Journal) WHERE r.pages = '293-299' RETURN n.article_id AS article_id, count(m) AS count","MATCH (article:Article)-[published_in:PUBLISHED_IN]->(journal:Journal)
+WHERE published_in.pages = '293-299'
+RETURN article.article_id AS article_id, count(journal) AS journal_count"
+MATCH (e:Entity) WHERE EXISTS {     (e)-[:same_company_as]->(e2:Entity)     WHERE e.company_type IS NOT NULL AND e2.company_type IS NOT NULL AND e.company_type <> e2.company_type } RETURN e,"MATCH (e1:Entity)-[:same_company_as]-(e2:Entity)
+WHERE e1.company_type IS NOT NULL
+  AND e2.company_type IS NOT NULL
+  AND e1.company_type <> e2.company_type
+RETURN DISTINCT e1.name AS CompanyName"
+MATCH (o:Order)-[rel:ORDERS]->(p:Product) WHERE rel.quantity > 10 WITH avg(toFloat(rel.unitPrice)) AS avgPrice RETURN avgPrice,"MATCH (:Order)-[r:ORDERS]->(p:Product)
+WHERE r.quantity > 10
+RETURN avg(DISTINCT p.unitPrice) AS averageUnitPrice"
+"MATCH (students:Students) RETURN students.first_name,students.middle_name,students.last_name ORDER BY students.date_first_registered ASC LIMIT 1","MATCH (s:students)
+RETURN s.first_name, s.middle_name, s.last_name
+ORDER BY s.date_first_registered ASC
+LIMIT 1"
+"MATCH (e:Article{title:'Solutions to congruences using sets with the property of Baire'})-[r1]->(n)-[r2]->(m) WHERE TYPE(r1) <> TYPE(r2) RETURN properties(n) AS props1, properties(m) AS props2","MATCH (a:Article {title: ""Solutions to congruences using sets with the property of Baire, by two different types of relationships""})
+MATCH (a)-[r]-(n)
+WITH n, count(DISTINCT type(r)) AS distinctRelationshipTypes
+WHERE distinctRelationshipTypes >= 2
+RETURN properties(n)"
+"MATCH (org:Organization {isPublic: true})-[:HAS_CEO]->(ceo:Person) MATCH (ceo)-[:HAS_CHILD]->(child:Person) RETURN ceo.name AS CEO, child.name AS Child","MATCH (p:Person)<-[:HAS_CEO]-(o:Organization)
+WHERE o.isPublic = true
+MATCH (p)-[:HAS_CHILD]->(child:Person)
+RETURN child.name AS ChildName"
+"MATCH (u1:User {label: ""inchristbl.bsky.social""})-[:INTERACTED]->(u2:User) WHERE u2.area < 3 RETURN u2.label","MATCH (u:User)-[:INTERACTED]->(target:User)
+WHERE target.label = 'inchristbl.bsky.social' AND u.area < 3
+RETURN u"
+"MATCH (d:Topic)-[r]->(n) WHERE d.description CONTAINS 'Encompasses techniques for reconstructing images from blurred or incomplete data using regularizers, sparsity, and phase retrieval algorithms, with applications in compressive sensing, neural networks, and optical imaging. Focuses on understanding small-time behavior, limiting transitions, and phase transitions in signal processing and optics, as well as the role of status-dependent behavior and spiking neurons in neural networks. Emphasizes the importance of regularization, penalization, and lasso techniques in image reconstruction and phase retrieval' RETURN n, TYPE(r)","MATCH (t:Topic)
+WHERE t.description CONTAINS ""Encompasses techniques for reconstructing images from blurred or incomplete data using regularizers, sparsity, and phase retrieval algorithms, with applications in compressive sensing, neural networks, and optical imaging. Focuses on understanding small-time behavior, limiting transitions, and phase transitions in signal processing and optics, as well as the role of status-dependent behavior and spiking neurons in neural networks. Emphasizes the importance of regularization, penalization, and lasso techniques in image reconstruction and phase retrieval""
+MATCH (t)-[r]-(n)
+RETURN n, type(r)"
+MATCH (e:Entity) WHERE e.country_codes = 'HKG' AND e.service_provider = 'Mossack Fonseca' RETURN e,"MATCH (e:Entity)
+WHERE e.country_codes = 'HKG' AND e.service_provider = 'Mossack Fonseca'
+RETURN e"
+MATCH (u1:User)-[:INTERACTED]->(u2:User) WHERE u2.y < -5000 RETURN u1 LIMIT 3,"MATCH (u1:User)-[:INTERACTED]->(u2:User)
+WHERE u2.y < -5000
+RETURN DISTINCT u1
+LIMIT 3"
+"MATCH (s:Student) RETURN s.Major, COUNT(s) ORDER BY COUNT(s) ASC LIMIT 1","MATCH (s:Student)
+WITH s.Major AS Major, count(s) AS NumberOfStudents
+ORDER BY NumberOfStudents ASC
+LIMIT 1
+RETURN Major, NumberOfStudents"
+"MATCH (m:Movie) WHERE m.votes IS NOT NULL RETURN m.title, m.votes ORDER BY m.votes DESC LIMIT 5","MATCH (movie:Movie)
+RETURN movie.title, movie.votes
+ORDER BY movie.votes DESC
+LIMIT 5"
+"MATCH (u:User) RETURN u.name, u.screen_name, count{(u)-[:FOLLOWS]->(:User)} AS followingCount ORDER BY followingCount DESC LIMIT 3","MATCH (u:User)
+RETURN u.screen_name, u.following
+ORDER BY u.following DESC
+LIMIT 3"
+"MATCH (me:Me {screen_name: 'neo4j'})-[:INTERACTS_WITH]->(user:User) RETURN user.screen_name, COUNT(*) AS interaction_count ORDER BY interaction_count DESC LIMIT 1","MATCH (me:Me {screen_name: 'neo4j'})-[r:INTERACTS_WITH]->(user:User)
+RETURN user.screen_name AS InteractedUser, COUNT(r) AS InteractionCount
+ORDER BY InteractionCount DESC
+LIMIT 1"
+MATCH (m:Movie)<-[r:REVIEWED]-(p:Person) WHERE r.summary = 'Pretty funny at times' RETURN m.title,"MATCH (m:Movie)<-[r:REVIEWED]-(:Person)
+WHERE r.summary = 'Pretty funny at times'
+RETURN m.title"
+"MATCH (a:Article {comments:'21 pages, AMS-LaTeX'})-[r:PUBLISHED_IN]->(b:Journal) WHERE ANY(key IN keys(a) WHERE a[key] = b[key]) RETURN b","MATCH (a:Article)-[:PUBLISHED_IN]->(:Journal)
+WHERE a.comments = '21 pages, AMS-LaTeX'
+RETURN a"
+"MATCH (p:Publication) WITH p.Publisher as Publisher, COUNT(p) AS count WHERE count > 1 return Publisher","MATCH (p:Publication)
+WITH p.Publisher AS Publisher, COUNT(p) AS PublicationCount
+WHERE PublicationCount > 1
+RETURN Publisher"
+MATCH (m:Member) RETURN COUNT(DISTINCT m.Level),"MATCH (m:Member)
+RETURN COUNT(DISTINCT m.Level)"
+"MATCH (rust_stream:Stream)-[:PLAYS]->(game:Game {name: ""Rust""}) MATCH (rust_stream)-[:VIP]->(vip_user:User) MATCH (vip_user)-[:VIP]->(other_stream:Stream) MATCH (chatter_user:User)-[:CHATTER]->(other_stream) RETURN DISTINCT chatter_user.name","MATCH (user1:User)-[:CHATTER]->(stream1:Stream)-[:VIP]->(user2:User)
+MATCH (user2)-[:VIP]->(stream2:Stream)-[:PLAYS]->(game:Game)
+WHERE game.name = ""Rust""
+RETURN DISTINCT user1"
+MATCH (b:Business)<-[:REVIEWS]-(r:Review) WHERE r.date = date('2018-09-10') RETURN b,"MATCH (b:Business)<-[:REVIEWS]-(r:Review)
+WHERE r.date = date('2018-09-10')
+RETURN b.name"
+MATCH (m:Movie)-[:PRODUCED_BY]->(pc:ProductionCompany {name: 'Pixar Animation Studios'}) WHERE m.budget > 50000000 RETURN m.title ORDER BY m.release_date LIMIT 3,"MATCH (movie:Movie)-[:PRODUCED_BY]->(company:ProductionCompany)
+WHERE company.name = 'Pixar Animation Studios' AND movie.budget > 50000000
+RETURN movie.title
+LIMIT 3"
+"MATCH (targetQuestion:Question {id: 62220505}) WITH targetQuestion.favorites AS targetFavorites MATCH (question:Question) WHERE question.favorites = targetFavorites RETURN question.id, question.text","MATCH (q1:Question)
+WHERE q1.id = 62220505
+WITH q1.favorites AS targetFavorites
+MATCH (q2:Question)
+WHERE q2.favorites = targetFavorites
+RETURN q2"
+MATCH (n:Article) WHERE EXISTS { MATCH (n)-[:HAS_CATEGORY]->(:Categories) } RETURN n.title AS title,"MATCH (a:Article)-[:HAS_CATEGORY]->(:Categories)
+RETURN a.title"
+"MATCH (t:Tweet)-[:MENTIONS]->(u:User {screen_name: 'neo4j'}) WHERE t.favorites > 100 RETURN t.text AS tweet_text, t.favorites AS favorite_count, t.created_at AS created_at","MATCH (t:Tweet)-[:MENTIONS]->(u)
+WHERE u.screen_name = 'neo4j' AND t.favorites > 100
+RETURN t"
+MATCH (n:Article) WHERE n.article_id > 1006 OR n.article_id < 1048 RETURN n LIMIT 8,"MATCH (a:Article)
+WHERE a.article_id > 1006 OR a.article_id < 1048
+RETURN a
+LIMIT 8"
+MATCH (a:Article {title: 'Funds for Consumer Behavior Specialist Infinite An'})-[:MENTIONS]->(o:Organization) RETURN o LIMIT 3,"MATCH (a:Article)-[:MENTIONS]->(o:Organization)
+WHERE a.title = 'Funds for Consumer Behavior Specialist Infinite An'
+RETURN o.name
+LIMIT 3"
+"MATCH (t:Tweet) RETURN t.text, t.favorites ORDER BY t.favorites DESC LIMIT 5","MATCH (t:Tweet)
+RETURN t.text, t.favorites
+ORDER BY t.favorites DESC
+LIMIT 5"
+"MATCH (c:Customer)-[:PURCHASED]->(o:Order)-[:ORDERS]->(p:Product) WITH c, COUNT(DISTINCT p.productID) AS distinctProducts ORDER BY distinctProducts DESC LIMIT 3 RETURN c.companyName AS customerName, distinctProducts","MATCH (customer:Customer)-[:PURCHASED]->(order:Order)-[:ORDERS]->(product:Product)
+WITH customer, COUNT(DISTINCT product.productID) AS distinctProductCount
+ORDER BY distinctProductCount DESC
+LIMIT 3
+RETURN customer.companyName, distinctProductCount"
+MATCH (o:Order {shipCountry: 'Denmark'})-[:ORDERS]->(p:Product) WITH avg(toFloat(o.discount)) AS averageDiscount RETURN averageDiscount,"MATCH (:Customer)-[p:PURCHASED]->(o:Order)
+WHERE o.shipCountry = 'Denmark'
+MATCH (o)-[r:ORDERS]->(:Product)
+RETURN avg(toFloat(r.discount)) AS averageDiscount"
+"MATCH (p:Person)<-[:HAS_CEO]-(o:Organization) WHERE o.revenue IS NOT NULL RETURN p.name AS ceo, o.name AS company, o.revenue AS revenue ORDER BY o.revenue DESC LIMIT 5","MATCH (p:Person)<-[:HAS_CEO]-(o:Organization)
+WHERE o.revenue IS NOT NULL
+RETURN p.name AS CEO, o.revenue AS OrganizationRevenue
+ORDER BY o.revenue DESC
+LIMIT 5"
+"MATCH (a:Article{comments:'26 pages, revised, to appear in Advances in Cryptology -- Asiacrypt   2005'})-[:HAS_CATEGORY]->(c:Categories)-[r]->(n) RETURN n","MATCH (a:Article)-[:HAS_CATEGORY]->(c:Categories)
+WHERE a.comments = '26 pages, revised, to appear in Advances in Cryptology -- Asiacrypt 2005'
+RETURN c"
+MATCH (m:Movie) WHERE m.votes > 100 RETURN m.title,"MATCH (m:Movie)
+WHERE m.votes > 100
+RETURN m.title"
+"MATCH (pc:ProductionCompany)-[:PRODUCED_BY]-(m:Movie) WHERE m.revenue IS NOT NULL RETURN pc.name, sum(m.revenue) AS total_revenue ORDER BY total_revenue DESC LIMIT 3","MATCH (pc:ProductionCompany)<-[:PRODUCED_BY]-(m:Movie)
+RETURN pc.name AS ProductionCompany, SUM(m.revenue) AS TotalRevenue
+ORDER BY TotalRevenue DESC
+LIMIT 3"
+MATCH (s:Stream)<-[:VIP]-(:User) RETURN s.name AS stream_name ORDER BY s.total_view_count DESC LIMIT 3,"MATCH (s:Stream)-[:VIP]->(:User)
+RETURN DISTINCT s.name
+ORDER BY s.total_view_count DESC
+LIMIT 3"
+"MATCH (s:Student) WHERE s.Fname =~ ""(?i).*a.*"" RETURN DISTINCT s.Fname","MATCH (s:Student)
+WHERE s.Fname CONTAINS 'a'
+RETURN s.Fname"
+"MATCH (e1:Entity {name: ""Deutsche Bank AG""}) MATCH (e1)-[:COUNTRY]->(c:Country) MATCH (c)<-[:COUNTRY]-(e2:Entity) MATCH (e2)-[:ORIGINATOR]->(f:Filing) WITH avg(f.amount) AS averageAmount RETURN averageAmount","MATCH (db:Entity {name: ""Deutsche Bank AG""})-[:COUNTRY]->(c:Country)
+MATCH (e:Entity)-[:COUNTRY]->(c)
+MATCH (f:Filing)-[:ORIGINATOR]->(e)
+RETURN avg(f.amount) AS averageFilingAmount"
+MATCH (c:Customer)-[:PURCHASED]->(o:Order)-[oi:ORDERS]->(p:Product) WHERE c.country = 'USA' WITH avg(toFloat(oi.unitPrice)) AS avgPrice RETURN avgPrice,"MATCH (c:Customer)-[p:PURCHASED]->(o:Order)-[r:ORDERS]->(prod:Product)
+WHERE c.country = 'USA'
+RETURN AVG(toFloat(r.unitPrice)) AS averageUnitPrice"
+MATCH (n:Topic) WHERE n.cluster > 10 OR n.cluster < 7 RETURN n LIMIT 8,"MATCH (t:Topic)
+WHERE t.cluster > 10 OR t.cluster < 7
+RETURN t
+LIMIT 8"
+"MATCH (b:UpdateDate)-[r]->(n) WHERE b.update_date = '2009-10-31' RETURN properties(b) AS UpdateDate_props, properties(n) AS props","MATCH (u:UpdateDate)-[]-(n)
+WHERE u.update_date = date('2009-10-31')
+RETURN properties(u) AS UpdateDateProperties, properties(n) AS ConnectedNodeProperties"
+"MATCH (m:Movie)-[r:HAS_KEYWORD]->(k:Keyword) RETURN m.title AS movie, count(r) AS num_keywords ORDER BY num_keywords DESC LIMIT 10","MATCH (movie:Movie)-[:HAS_KEYWORD]->(keyword:Keyword)
+WITH movie, COUNT(keyword) AS keywordCount
+ORDER BY keywordCount DESC
+LIMIT 1
+MATCH (movieWithMostKeywords:Movie)-[:HAS_KEYWORD]->(k:Keyword)
+WITH movieWithMostKeywords, COUNT(k) AS maxKeywordCount
+WHERE maxKeywordCount = (
+    MATCH (m:Movie)-[:HAS_KEYWORD]->(key:Keyword)
+    WITH m, COUNT(key) AS count
+    ORDER BY count DESC
+    LIMIT 1
+    RETURN count
+)
+RETURN movieWithMostKeywords.title AS movieTitle, maxKeywordCount AS numberOfKeywords"
+"MATCH (m:Movie) MATCH (m)-[:ORIGINAL_LANGUAGE]->(l:Language) WITH l, count(m) AS movieCount ORDER BY movieCount DESC RETURN l.name AS language, movieCount LIMIT 1","MATCH (movie:Movie)-[:ORIGINAL_LANGUAGE]->(language:Language)
+RETURN language.name AS originalLanguage, count(movie) AS movieCount
+ORDER BY movieCount DESC
+LIMIT 1"
+MATCH (n:Author) WHERE n.last_name = 'Neeman' OR n.first_name IS NOT NULL RETURN DISTINCT n.first_name AS first_name,"MATCH (a:Author)
+WHERE a.last_name = 'Neeman' OR a.first_name IS NOT NULL
+RETURN DISTINCT a.first_name"
+MATCH (a:Categories{category_id:'4b7053a7def1fb0250a0e83ebd2f9a7b'})-[*3]->(n) RETURN labels(n) AS FarNodes,"MATCH (c:Categories)-[*3]-(n)
+WHERE c.category_id = '4b7053a7def1fb0250a0e83ebd2f9a7b'
+RETURN n"
+MATCH (n:Article) -[:PUBLISHED_IN{pages: '521-554'}]->(m:Journal) WHERE m.abstract < date('2020-12-31') RETURN avg(m.name) AS avg_name,"MATCH (a:Article)-[r:PUBLISHED_IN]->(j:Journal)
+WHERE r.pages = '521-554'
+  AND date(a.abstract) < date('2020-12-31')
+RETURN avg(size(j.name)) AS averageJournalNameLength"
+"MATCH (p:Person)-[:PRODUCED]->(m:Movie) WHERE m.tagline IS NOT NULL WITH p, count(DISTINCT m.tagline) AS distinctTaglines ORDER BY distinctTaglines DESC LIMIT 3 RETURN p.name, distinctTaglines","MATCH (p:Person)-[:PRODUCED]->(m:Movie)
+WITH p, COUNT(DISTINCT m.tagline) AS distinctTaglinesCount
+ORDER BY distinctTaglinesCount DESC
+LIMIT 3
+RETURN p.name AS Producer, distinctTaglinesCount"
+MATCH (n:Keyword) WHERE n.key_id =~'a8.*' RETURN n,"MATCH (n:Keyword)
+WHERE n.key_id ENDS WITH ""a8""
+RETURN n"
+MATCH (e:Editor) WHERE NOT (:Journal)-[:EDited_BY]->(e) RETURN e.Name,"MATCH (e:Editor)
+WHERE NOT (e)<-[:EDited_BY]-(:Journal)
+RETURN e.Name"
+"MATCH (T1:RepairAssignment)-[:ASSIGNED_TO]->(T3:Technician), (T1)-[:ASSIGNED_TO]->(T2:Machine) RETURN T3.Name ORDER BY T2.quality_rank","MATCH (t:Technician)-[:ASSIGNED_TO]->(ra:RepairAssignment)-[:ASSIGNED_TO]->(m:Machine)
+RETURN t.Name
+ORDER BY m.quality_rank ASC"
+MATCH (n:Topic) WHERE n.description IS NULL RETURN n LIMIT 8,"MATCH (t:Topic)
+WHERE NOT EXISTS(t.description)
+RETURN t
+LIMIT 8"
+MATCH (q:Question) WHERE q.createdAt = datetime('2020-06-05T21:49:16Z') RETURN q,"MATCH (q:Question)
+WHERE q.createdAt = datetime('2020-06-05T21:49:16Z')
+RETURN q"
+MATCH (m:Movie) RETURN m,"MATCH (p:Person)-[:DIRECTED]->(m:Movie)
+WHERE m.budget > 100000000
+RETURN p.name"
+"MATCH (r:Review) WITH r ORDER BY r.stars DESC, r.date ASC LIMIT 3 RETURN r.reviewId, r.text, r.stars, r.date","MATCH (r:Review)
+RETURN r.text, r.stars
+ORDER BY r.stars DESC
+LIMIT 3"
+"MATCH (e:Entity) WHERE e.jurisdiction = 'SAM' AND e.struck_off_date CONTAINS '2013' RETURN e.name AS entity_name, e.struck_off_date AS struck_off_date","MATCH (e:Entity)
+WHERE e.jurisdiction_description = ""Samoa"" AND e.struck_off_date ENDS WITH ""2013""
+RETURN e"
+MATCH (u:User {name: 'Will'})-[:WROTE]->(r:Review)-[:REVIEWS]->(b:Business)-[:IN_CATEGORY]->(c:Category) RETURN DISTINCT c.name AS categories,"MATCH (u:User)-[:WROTE]->(r:Review)-[:REVIEWS]->(b:Business)-[:IN_CATEGORY]->(c:Category)
+WHERE u.name = 'Will'
+RETURN DISTINCT c.name AS Category"
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(p) RETURN m.title LIMIT 3,"MATCH (actor:Actor)-[:DIRECTED]->(movie:Movie)
+RETURN movie.title
+LIMIT 3"
+MATCH p=(a:Article{article_id:'1048'})-[*]->(d:Keyword{name:'tree (optimality criteria: minimum mean-squared error)  alternative keyword suggestions: - multiscale superpopulation models - independent innovations trees - water-'}) RETURN count(p),"MATCH p = (a:Article {article_id: 1048})-[*]-(k:Keyword {name: 'tree'})
+RETURN count(p) AS numberOfPaths"
+MATCH (a:Article)-[:MENTIONS]->(o:Organization) WHERE a.sentiment < 0 AND exists {   (a)-[:HAS_CHUNK]->(c:Chunk)   WHERE c.text CONTAINS 'revenue decrease' OR c.text CONTAINS 'revenue declined' } RETURN DISTINCT o.name AS organization,"MATCH (org:Organization)<-[:MENTIONS]-(article:Article)-[:HAS_CHUNK]->(chunk:Chunk)
+WHERE chunk.text CONTAINS ""revenue decrease""
+RETURN DISTINCT org.name AS Organization"
+"MATCH (f:Filing)-[:ORIGINATOR]->(e:Entity)-[:COUNTRY]->(c:Country) WITH c.name AS country, COUNT(DISTINCT e.id) AS originator_count ORDER BY originator_count DESC LIMIT 3 RETURN country, originator_count","MATCH (f:Filing)
+WITH f.originator_bank_country AS country, COLLECT(DISTINCT f.originator_bank) AS distinctBanks
+RETURN country, size(distinctBanks) AS numOriginatorBanks
+ORDER BY numOriginatorBanks DESC
+LIMIT 3"
+MATCH (q:Question)-[:TAGGED]->(t:Tag {name: 'graphql'}) WHERE q.createdAt >= datetime('2020-06-05T00:00:00Z') RETURN count(q) AS NumberOfQuestions,"MATCH (q:Question)-[:TAGGED]->(t:Tag)
+WHERE q.createdAt >= date('2020-06-05') AND t.name = 'graphql'
+RETURN count(q)"
+MATCH (e:Entity)-[:registered_address]->(a:Address) WHERE a.countries = 'Hong Kong' RETURN e LIMIT 5,"MATCH (e:Entity)-[:registered_address]->(a:Address)
+WHERE a.countries = 'Hong Kong'
+RETURN e
+LIMIT 5"
+MATCH (e:Entity)-[:COUNTRY]->(c:Country) WHERE c.code = 'CHN' WITH e MATCH (e)-[:FILED]->(f:Filing) RETURN avg(f.amount),"MATCH (e:Entity)-[:FILED]->(f:Filing)
+MATCH (e)-[:COUNTRY]->(c:Country)
+WHERE c.code = 'CHN'
+RETURN avg(f.amount) AS averageAmount"
+"MATCH (a:Article{comments:'19 pages, AMSLatex, references added'})-[*]->(n) RETURN DISTINCT properties(n) AS Properties","MATCH (a:Article)
+WHERE a.comments = ""19 pages, AMSLatex, references added!""
+MATCH (a)-[*]-(targetNode)
+UNWIND keys(targetNode) AS propertyKey
+RETURN DISTINCT propertyKey"
+"MATCH (a:Report{report_id:'dd0a54fea06e7b7a384741aac9313d65'})-[r]->() RETURN COUNT(DISTINCT TYPE(r)) AS rels, TYPE(r)","MATCH (r:Report {report_id: 'dd0a54fea06e7b7a384741aac9313d65'})-[rel]->()
+RETURN count(rel) AS unique_relationships_count"
+MATCH (b:Business)-[:IN_CATEGORY]->(c:Category) WHERE b.city = 'San Mateo' AND c.name = 'Coffee' RETURN b.name,"MATCH (b:Business)-[:IN_CATEGORY]->(c:Category)
+WHERE b.city = 'San Mateo' AND c.name = 'Coffee'
+RETURN b.name"
+MATCH (q:Question {answered: true}) RETURN q ORDER BY q.createdAt LIMIT 3,"MATCH (q:Question)
+WHERE q.answered = true
+RETURN q
+LIMIT 3"
+MATCH (u:User) WHERE u.size < 2.0 RETURN u ORDER BY u.size DESC LIMIT 5,"MATCH (u:User)
+WHERE u.size < 2.0
+RETURN u.label AS userLabel, u.size AS userSize
+ORDER BY u.size DESC
+LIMIT 5"
+"MATCH (u:User {screen_name: 'neo4j'})-[:POSTS]->(t:Tweet)-[:MENTIONS]->(mentioned:User) RETURN mentioned.screen_name, count(t) AS mentions_count ORDER BY mentions_count DESC","MATCH (me:Me {screen_name: 'neo4j'})-[:POSTS]->(tweet:Tweet)-[:MENTIONS]->(user:User)
+RETURN user.screen_name, COUNT(user) AS mentionCount
+ORDER BY mentionCount DESC"
+MATCH (o:Organization)<-[:MENTIONS]-(a:Article) WHERE o.name CONTAINS 'Accenture' WITH avg(a.sentiment) AS averageSentiment RETURN averageSentiment,"MATCH (org:Organization)
+WHERE org.name CONTAINS ""Accenture""
+MATCH (article:Article)-[:MENTIONS]->(org)
+RETURN avg(article.sentiment) AS averageSentimentScore"
+"MATCH (c1:Character)-[i:INTERACTS45]->(c2:Character) WHERE i.weight > 50 RETURN c1.name AS character1, c2.name AS character2, i.weight AS weight","MATCH (c:Character)-[r:INTERACTS45]->()
+WHERE r.weight > 50
+RETURN DISTINCT c"
+"MATCH (u:User {name: ""Omar Huffman""})-[:RATED]->(m:Movie) WITH u,  substring(m.released, 1, 4) AS userBirthYear MATCH (movie:Movie) WHERE substring(movie.released, 1, 4) = userBirthYear RETURN DISTINCT movie.title","MATCH (u:User {name: ""Omar Huffman""})
+WITH u
+MATCH (m:Movie)
+WHERE m.year = toInteger(split(u.name, ' ')[1])
+RETURN m.title, m.year"
+MATCH (d:Director)-[:DIRECTED]->(m:Movie) WHERE m.imdbRating >= 9 RETURN DISTINCT d.name LIMIT 5,"MATCH (d:Director)-[:DIRECTED]->(m:Movie)
+WHERE m.imdbRating >= 9
+RETURN d.name
+LIMIT 5"
+MATCH (p:Person)-[r:ACTED_IN]->(m:Movie) WHERE p.name = 'Keanu Reeves' AND m.title = 'The Matrix' RETURN r.roles AS roles,"MATCH (p:Person)-[r:ACTED_IN]->(m:Movie)
+WHERE p.name = 'Keanu Reeves' AND m.title = 'The Matrix'
+RETURN r.roles"
+MATCH (a:Article{title:'Notes for a Quantum Index Theorem'})-[:PUBLISHED_IN]->(c:Journal)-[r]->(n) RETURN n,"MATCH (a:Article)-[:PUBLISHED_IN]->(j:Journal)
+WHERE a.title = ""Notes for a Quantum Index Theorem""
+RETURN j"
+MATCH (n:Author) WHERE n.author_id IS NULL RETURN count(n),"MATCH (a:Author)
+WHERE NOT EXISTS(a.author_id)
+RETURN count(a) AS missing_author_id_count"
+"MATCH (a:Article{comments:'Published by Geometry and Topology at   http://www.maths.warwick.ac.uk/gt/GTVol4/paper14.abs.html'})-[r]->() RETURN TYPE(r) AS Relations, COUNT(r) AS Counts","MATCH (a:Article)
+WHERE a.comments = ""Published by Geometry and Topology at\n  http://www.maths.warwick.ac.uk/gt/GTVol4/paper14.abs.html!""
+MATCH (a)-[r]-()
+RETURN type(r) AS relationshipType, count(r) AS count"
+"MATCH (d:Director)-[:DIRECTED]->(m:Movie) WITH d, collect(DISTINCT m.languages) AS languages WHERE size(languages) > 1 RETURN d.name, languages ORDER BY size(languages) DESC LIMIT 3","MATCH (d:Director)-[:DIRECTED]->(m:Movie)
+WHERE size(m.languages) > 1
+RETURN DISTINCT d.name
+LIMIT 3"
+MATCH (a:Article{title:'Classification of Subsystems for Local Nets with Trivial Superselection   Structure'})-[r:PUBLISHED_IN {pages :'89-106'}]->(b:Journal) WHERE ANY(key IN keys(a) WHERE a[key] = b[key]) RETURN b,"MATCH (article:Article)-[published_in:PUBLISHED_IN]->(journal:Journal)
+WHERE article.title = ""Classification of Subsystems for Local Nets with Trivial Superselection Structure""
+  AND published_in.pages = ""89-106""
+RETURN journal"
+"MATCH (s:Stream)-[:HAS_TEAM]->(t:Team) WHERE t.createdAt < datetime('2015-01-01T00:00:00Z') RETURN s.name AS streamName, s.url AS streamURL ORDER BY t.createdAt LIMIT 3","MATCH (s:Stream)-[:HAS_TEAM]->(t:Team)
+WHERE t.createdAt < datetime('2015-01-01T00:00:00Z')
+RETURN s.name, s.url
+LIMIT 3"
+"MATCH (a:Article{title:'The Gervais-Neveu-Felder equation for the Jordanian quasi-Hopf   U_{h;y}(sl(2)) algebra'})-[r]->(n), (n)-[s]->(m) RETURN labels(n) AS Interim, labels(m) AS Target","MATCH (a:Article {title: ""The Gervais-Neveu-Felder equation for the Jordanian quasi-Hopf U_{h;y}(sl(2)) algebra""})--(x)
+MATCH (x)--(y)
+WHERE y <> a
+RETURN DISTINCT x"
+MATCH (n:Topic) WHERE n.label <> 'Population Dynamics_0' RETURN DISTINCT n.description AS description,"MATCH (t:Topic)
+WHERE t.label <> 'Population Dynamics_0'
+RETURN DISTINCT t.description"
+MATCH (p:Person)-[:WROTE]->(m:Movie) WHERE (p)-[:DIRECTED]->(m) RETURN DISTINCT p.name,"MATCH (p:Person)-[:WROTE]->(m:Movie)
+MATCH (p)-[:DIRECTED]->(m)
+RETURN p.name"
+"MATCH (p:Person)-[:DIRECTED]->(m:Movie) WHERE m.votes > 200 WITH p, count(m) AS num_movies ORDER BY num_movies DESC LIMIT 5 RETURN p.name AS director, num_movies","MATCH (p:Person)-[:DIRECTED]->(m:Movie)
+WHERE m.votes > 200
+RETURN DISTINCT p.name
+LIMIT 5"
+"MATCH (a:AllDocument) MATCH (b:RefCalendar) WHERE a.Date_Stored = b.Calendar_Date RETURN a.Date_Stored, b.Day_Number","MATCH (d:AllDocument)-[:ASSOCIATED_WITH]->(c:RefCalendar)
+RETURN c.Day_Number, d.Date_Stored"
+"MATCH (f:Filing)-[:BENEFITS|:CONCERNS|:ORIGINATOR]->(e:Entity)-[:COUNTRY]->(c:Country) WHERE f.amount < 500000 WITH c, count(f) AS num_filings ORDER BY num_filings DESC LIMIT 5 RETURN c.name AS country_name, num_filings","MATCH (country:Country)<-[:COUNTRY]-(entity:Entity)
+MATCH (filing:Filing)
+WHERE filing.amount < 500000
+AND (
+    (filing)-[:BENEFITS]->(entity) OR
+    (filing)-[:CONCERNS]->(entity) OR
+    (filing)-[:ORIGINATOR]->(entity) OR
+    (entity)-[:FILED]->(filing)
+)
+RETURN country.name AS Country, count(DISTINCT filing) AS NumberOfFilings
+ORDER BY NumberOfFilings DESC
+LIMIT 5"
+MATCH (u:User {name: 'itsbigchase'}) MATCH (s:Stream) WHERE exists{(u)-[:MODERATOR]->(s)} AND exists{(u)-[:CHATTER]->(s)} RETURN s,"MATCH (u:User {name: 'itsbigchase'})-[:MODERATOR]->(s:Stream)
+MATCH (u)-[:CHATTER]->(s)
+RETURN s"
+MATCH (n:Article {title: 'On the collision between two PNG droplets'}) -[:HAS_KEY]- (m:Keyword) WHERE m.name STARTS WITH 'k' RETURN m,"MATCH (a:Article)-[:HAS_KEY]->(k:Keyword)
+WHERE a.title = ""On the collision between two PNG droplets!""
+  AND k.name STARTS WITH ""k""
+RETURN k"
+MATCH (p:Product) RETURN avg(p.pages_per_minute_color),"MATCH (p:Product)
+RETURN AVG(p.pages_per_minute_color)"
+MATCH (s:Supplier)-[:SUPPLIES]->(p:Product) WHERE p.unitsInStock > 80 RETURN s,"MATCH (s:Supplier)-[:SUPPLIES]->(p:Product)
+WHERE p.unitsInStock > 80
+RETURN DISTINCT s.companyName"
+MATCH (s:Storm) WHERE NOT EXISTS((s)-[:AFFECTS]->(:Region)) RETURN s.Name,"MATCH (s:Storm)
+WHERE NOT EXISTS((s)-[:AFFECTS]->(:Region))
+RETURN s.Name"
+"MATCH (a:Article{abstract:'  Determining contributions by sub-portfolios or single exposures to portfolio-wide economic capital for credit risk is an important risk measurement task. Often economic capital is measured as Value-at-Risk (VaR) of the portfolio loss distribution. For many of the credit portfolio risk models used in practice, the VaR contributions then have to be estimated from Monte Carlo samples. In the context of a partly continuous loss distribution (i.e. continuous except for a positive point mass on zero), we investigate how to combine kernel estimation methods with importance sampling to achieve more efficient (i.e. less volatile) estimation of VaR contributions. '})-[:HAS_CATEGORY]->(c:Categories)-[r]->(n) RETURN n","MATCH (a:Article)-[:HAS_CATEGORY]->(c:Categories)
+WHERE a.abstract = ""Determining contributions by sub-portfolios or single exposures to\nportfolio-wide economic capital for credit risk is an important risk\nmeasurement task. Often economic capital is measured as Value-at-Risk (VaR) of\nthe portfolio loss distribution. For many of the credit portfolio risk models\nused in practice, the VaR contributions then have to be estimated from Monte\nCarlo samples. In the context of a partly continuous loss distribution (i.e.\ncontinuous except for a positive point mass on zero), we investigate how to\ncombine kernel estimation methods with importance sampling to achieve more\nefficient (i.e. less volatile) estimation of VaR contributions.""
+RETURN c"
+MATCH (f:Filing)-[:ORIGINATOR]->(e:Entity) WHERE f.originator_bank = 'CIMB Bank Berhad' AND f.amount > 500000 RETURN e.name AS originator_entity_name ORDER BY f.begin LIMIT 3,"MATCH (e:Entity)<-[:ORIGINATOR]-(f:Filing)
+WHERE f.originator_bank = 'CIMB Bank Berhad' AND f.amount > 500000
+RETURN e
+LIMIT 3"
+"MATCH (a:DOI{doi_id:'6ecd77a291d325cb3e01160880d88c69'}), (b:Journal{journal_id:'79942321e19994e38ad2e372af21c893'}) RETURN EXISTS((a)-[*]-(b)) AS pathExists","MATCH (d:DOI {doi_id: '6ecd77a291d325cb3e01160880d88c69'})
+MATCH (j:Journal {journal_id: '79942321e19994e38ad2e372af21c893'})
+RETURN EXISTS((d)-[*]->(j)) AS path_exists"
+"MATCH (s:Stream)-[:PLAYS]->(g:Game) WITH g, count(DISTINCT s) AS streamCount WHERE streamCount > 5 RETURN g.name AS Game, streamCount","MATCH (game:Game)<-[:PLAYS]-(stream:Stream)
+WITH game, COUNT(DISTINCT stream) AS streamCount
+WHERE streamCount > 5
+RETURN game.name"
+MATCH (p:Product)-[:PART_OF]->(c:Category) WHERE p.unitPrice < 10 RETURN DISTINCT c.categoryName,"MATCH (c:Category)-[:PART_OF]->(p:Product)
+WHERE p.unitPrice < 10
+RETURN DISTINCT c.categoryName"
+"MATCH (u:User)-[:ASKED]->(q:Question) WHERE u.reputation > 1000 WITH u, COUNT(q) AS question_count ORDER BY question_count DESC LIMIT 1 RETURN u.display_name AS user, u.reputation AS reputation, question_count","MATCH (u:User)-[:ASKED]->(q:Question)
+WHERE u.reputation > 1000
+RETURN u.display_name AS userName, count(q) AS numQuestionsAsked
+ORDER BY numQuestionsAsked DESC
+LIMIT 1"
+"MATCH (o:Organization)-[:IN_CITY]->(c:City)-[:IN_COUNTRY]->(country:Country) WHERE o.motto IS NOT NULL AND o.motto <> """" RETURN DISTINCT country.name AS Country","MATCH (org:Organization)
+WHERE EXISTS(org.motto)
+MATCH (org)-[:IN_CITY]->(city:City)-[:IN_COUNTRY]->(country:Country)
+RETURN DISTINCT country.name AS Country"
+MATCH (u:User)-[:WROTE]->(r:Review)-[:REVIEWS]->(b:Business) WHERE b.address CONTAINS 'Main St' RETURN DISTINCT u.name,"MATCH (u:User)-[:WROTE]->(r:Review)-[:REVIEWS]->(b:Business)
+WHERE b.address CONTAINS 'Main St'
+RETURN DISTINCT u.name"
+MATCH (org:Organization)-[:IN_CITY]->(city:City) WHERE city.name = 'Rome' WITH sum(org.nbrEmployees) AS totalEmployees RETURN totalEmployees,"MATCH (c:City {name: ""Rome""})<-[:IN_CITY]-(o:Organization)
+RETURN sum(o.nbrEmployees) AS TotalEmployeesInRome"
