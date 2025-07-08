@@ -1,0 +1,911 @@
+reference,inference
+"MATCH (s:Supplier)-[:SUPPLIES]->(p:Product) WITH s, avg(p.unitPrice) AS avgUnitPrice ORDER BY avgUnitPrice DESC LIMIT 5 RETURN s.companyName AS Supplier, avgUnitPrice AS AverageUnitPrice","```cypher
+MATCH (s:Supplier)-[:SUPPLIES]->(p:Product)
+WITH s, COLLECT(p.unitPrice) AS prices
+ORDER BY AVG(prices) DESC
+LIMIT 5
+RETURN s.companyName, AVG(prices) AS averageUnitPrice
+```"
+MATCH (t:Technician) WHERE NOT EXISTS ((:RepairAssignment)-[:ASSIGNED_TO]->(t)) RETURN t.Name,"```cypher
+MATCH (t:Technician)-[:ASSIGNED_TO]->(r:RepairAssignment)
+WHERE t.technician_id IS NOT NULL
+RETURN t.Name
+```"
+"MATCH (n:Topic) WHERE NOT n.label STARTS WITH 'P' RETURN DISTINCT n.label AS label, n.description AS description","```cypher
+MATCH (t:Topic)
+WHERE NOT t.label STARTS WITH ""P""
+RETURN DISTINCT t.label, t.description
+```"
+MATCH (c:Company) RETURN count(c),"```cypher
+MATCH (c:Company)
+RETURN count(c)
+```"
+MATCH (a:Article)-[:MENTIONS]->(o:Organization {name: 'New Energy Group'}) RETURN a,"```cypher
+MATCH (o:Organization {name: ""New Energy Group""})-[:MENTIONS]->(a:Article)
+RETURN a
+```"
+"MATCH (n:District) WHERE n.City_Population >= 200000 AND n.City_Population <= 2000000 RETURN n.District_name, n.City_Population","```cypher
+MATCH (d:District)
+WHERE d.City_Population >= 200000 AND d.City_Population <= 2000000
+RETURN d.District_name, d.City_Population
+```"
+MATCH (n:Article) -[:PUBLISHED_IN{pages: '1-31'}]->(m:Journal) WHERE m.title < date('2020-12-31') RETURN avg(m.name) AS avg_name,"```cypher
+MATCH (a:Article)-[:PUBLISHED_IN]->(j:Journal)
+WHERE a.title ?<= ""December 31, 2020""
+AND j.name
+AND j.pages >= 1 AND j.pages <= 31
+RETURN avg(j.name) AS AverageJournalName
+```"
+"MATCH (t1:hiring)-[]-(t2:shop) WITH t2, count(t1.Shop_ID) AS cnt RETURN t2.Name ORDER BY cnt DESC LIMIT 1","```cypher
+MATCH (shop:shop)-[:HIRING]->(employee:employee)
+RETURN shop.name AS shop_name, count(employee) AS number_of_employees
+ORDER BY number_of_employees DESC
+LIMIT 1
+```"
+"MATCH (d:domain {name: 'Robotics'})<-[:paper_in_domain]-(p:paper)-[:paper_in_venue]->(c:conference)<-[:author_in_affiliation]-(a:author)-[:author_in_affiliation]->(aff:affiliation {name: 'Tsinghua University'}) RETURN c.name, COUNT(p) AS num_papers ORDER BY num_papers DESC","```cypher
+MATCH (a:author)-[:author_in_affiliation]->(af:affiliation {name: 'Tsinghua University'})
+MATCH (p:paper)-[r:paper_in_venue]->(c:conference)
+RETURN c.name AS conference_name, count(r) AS paper_count
+ORDER BY paper_count DESC
+```"
+"MATCH (m:Musical) WHERE m.Award <> ""Tony Award"" RETURN DISTINCT m.Nominee","```cypher
+MATCH (mus:Musical)-[:NOMINEE]->(nom:Nominee)
+WHERE NOT mus.Award = ""Tony Award""
+RETURN DISTINCT nom.Nominee
+```"
+"MATCH (n:Article) -[:HAS_DOI]->(m:DOI) WITH DISTINCT n, m RETURN n.abstract AS abstract, count(m) AS count LIMIT 20","<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+Article {abstract: STRING}
+DOI {}
+
+Relevant relationships are:
+{'start': Article, 'type': HAS_DOI, 'end': DOI }
+question:Search for the abstract values from 20 Article that are linked to DOI via HAS_DOI and return abstract along with the respective DOI counts!<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (a:Article)-[:HAS_DOI]->(d:DOI)
+WHERE a.id IN (LIMIT 20)
+RETURN a.abstract AS abstract, count(d) AS doi_count
+```
+
+**Explanation:**
+
+1.  **`MATCH (a:Article)-[:HAS_DOI]->(d:DOI)`**: This part of the query matches the following pattern:
+    *   `a:Article`:  Finds nodes labeled `Article` and assigns them to the variable `a`.
+    *   `-[:HAS_DOI]->`:  Finds relationships of type `HAS_DOI` directed from `Article` to `DOI`.
+    *   `d:DOI`: Finds nodes labeled `DOI` and assigns them to the variable `d`.
+
+2.  **`WHERE a.id IN (LIMIT 20)`**: This filters the results to only include articles with `id` within the first 20 articles based on `id` field. This ensures that the query returns only the first 20 articles.
+
+3.  **`RETURN a.abstract AS abstract, count(d) AS doi_count`**: This specifies what to return from the"
+"MATCH (m:Movie)-[:IN_GENRE]->(g:Genre) WITH g, avg(m.revenue) AS avg_revenue ORDER BY avg_revenue ASC LIMIT 3 RETURN g.name AS genre, avg_revenue","```cypher
+MATCH (m:Movie)
+WITH m, m.revenue AS revenue
+ORDER BY revenue ASC
+LIMIT 3
+MATCH (m:Movie)
+WITH m
+UNWIND m.genres AS genre
+RETURN genre.name, m.revenue
+```"
+"MATCH (user:User)-[:VIP]->(stream:Stream) WITH user, count(DISTINCT stream) AS vip_stream_count WHERE vip_stream_count >= 3 MATCH (user)-[:MODERATOR]->(:Stream) RETURN count(DISTINCT user) AS vip_moderator_count","```cypher
+MATCH (u:User)-[:VIP]->(s:Stream)-[:VIP]->(u2:User)
+WHERE u <> u2 AND count(distinct s) >= 3 AND u2)-[:MODERATOR]->(s)
+RETURN u
+```"
+MATCH (t:Tweet) RETURN t.id ORDER BY t.created_at ASC LIMIT 1,"```cypher
+MATCH (me:Me)-[:POSTS]->(tweet:Tweet)
+RETURN tweet AS tweet
+ORDER BY tweet.created_at ASC
+LIMIT 1
+```"
+"MATCH (p:Product) WITH p.Product_Type_Code AS Product_Type_Code, COUNT(p) as count WHERE count >= 2 RETURN Product_Type_Code","```cypher
+MATCH (p:Product)-[:CONTAINS]->(productInEvent:ProductsInEvent)
+RETURN p.Product_Type_Code
+GROUP BY p.Product_Type_Code
+HAVING COUNT(productInEvent) >= 2
+```"
+"MATCH (n:Article) -[r:PUBLISHED_IN]->(m:Journal) WHERE r.year='2000' WITH DISTINCT n, m RETURN n.title AS title, count(m) AS count LIMIT 20","```cypher
+MATCH (a:Article)-[:start {type: 'PUBLISHED_IN'}]->(j:Journal)
+WHERE a.title =~ '^(Article|a)' AND a.title.length() <= 20 AND
+      j.year = '2000'
+RETURN a.title AS Title, count(j) AS JournalCount
+```"
+"MATCH (neo4j:Me {screen_name: 'neo4j'})<-[:FOLLOWS]-(user:User) RETURN user.screen_name, user.name, user.followers, user.following, user.profile_image_url, user.url, user.location, user.statuses ORDER BY user.followers DESC LIMIT 5","```cypher
+MATCH (u:User {name: ""Neo4j""})-[:FOLLOWS]->(f:User)
+RETURN f
+ORDER BY f.created_at DESC
+LIMIT 5
+```"
+"MATCH (p:Patient)-[:HAS_ALLERGY]->(:Allergy),       (p)-[:HAS_DOCTOR]->(smith:Doctor {name: 'Dr. Smith'})-[:GAVE_DIAGNOSIS]->(diagnosis:Diagnosis)<-[:HAS_DIAGNOSIS]-(p) RETURN COUNT(distinct p) as PatientsNum","```cypher
+MATCH (d:Doctor {name: ""Smith""})-[:GAVE_DIAGNOSIS]->(diag:Diagnosis)-[:HAS_DIAGNOSIS]->(p:Patient)-[:HAS_ALLERGY]->(a:Allergy)
+RETURN count(p)
+```"
+"MATCH (c:Campus) WHERE c.Location = ""Northridge"" AND c.County = ""Los Angeles"" OR c.Location = ""San Francisco"" AND c.County = ""San Francisco"" RETURN c.Campus","```cypher
+MATCH (c:Campus)
+WHERE c.Location IN [""Northridge"", ""Los Angeles"", ""San Francisco"", ""San Francisco""]
+RETURN c.Location
+```"
+MATCH (me:Me)-[:AMPLIFIES]->(user:User) RETURN user.screen_name AS AmplifiedUser,"```cypher
+MATCH (me:User {screen_name: 'neo4j'})-[:AMPLIFIES]->(user:User)
+RETURN user
+```"
+"MATCH (me:Me {name: 'Neo4j'})-[:FOLLOWS]->(user:User) RETURN user.name, user.screen_name, user.followers, user.following ORDER BY user.followers DESC LIMIT 5","```cypher
+MATCH (u:User {name: ""Neo4j""})-[:FOLLOWS]->(followedUser:User)
+RETURN followedUser
+ORDER BY followedUser.followers DESC
+LIMIT 5
+```"
+MATCH (n:Article) -[:HAS_DOI]->(m:DOI) WHERE n.article_id = 1006 RETURN properties(m) AS props,"```cypher
+MATCH (a:Article {article_id: 1006})-[:HAS_DOI]->(d:DOI)
+RETURN d
+```"
+MATCH (a:UpdateDate{update_date:'2010-06-18'})-[*]->(n) RETURN DISTINCT properties(n) AS Properties,"<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+UpdateDate {update_date: DATE}
+question:Enumerate the properties of nodes that are either directly or indirectly connected to UpdateDate for which update_date is 2010-06-18!<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (n)-[r]->(ud:UpdateDate {update_date: '2010-06-18'})
+WHERE n <> ud // Avoid matching the UpdateDate node itself
+RETURN n, r, COLLECT(ud.properties) AS properties
+```
+
+**Explanation:**
+
+1.  **`MATCH (n)-[r]->(ud:UpdateDate {update_date: '2010-06-18'})`**: This is the core of the query.
+    *   `(n)`:  This matches any node (`n`) in the graph.
+    *   `-[r]->`: This matches a relationship (`r`) directed from node `n` to another node.
+    *   `(ud:UpdateDate {update_date: '2010-06-18'})`: This matches a node with the label `UpdateDate` that has the `update_date` property equal to '2010-06-18'.  The `ud` is an alias for this node.
+
+2.  **`WHERE n <> ud`**: This clause ensures that the query doesn't match the `UpdateDate"
+MATCH (c:CatalogContent) WHERE c.next_entry_id > 8 RETURN c.catalog_entry_name,"```cypher
+MATCH (n:CatalogContentsAdditionalAttribute)-[:PART_OF]->(p:CatalogContent)
+WHERE n.next_entry_id > 8
+RETURN n.catalog_entry_name
+```"
+MATCH (u:User)-[:CHATTER]->(s:Stream)-[:VIP]->(u) RETURN avg(u.followers),"```cypher
+MATCH (u:User)-[:CHATTER]->(s:Stream)-[:VIP]->(u2:User)
+WHERE u <> u2 AND u.name <> u2.name
+RETURN u.followers / COUNT(*) AS average_followers
+```"
+"MATCH (q:Question) RETURN q.title, q.score ORDER BY q.score ASC LIMIT 3","```cypher
+MATCH (q:Question)
+ORDER BY q.score FIELD BY q.score DESC
+LIMIT 3
+RETURN q
+```"
+MATCH (a:DOI)-[*3]->(n) WHERE a.name = '10.1016/S0764-4442(00)00217-2' RETURN properties(n) AS props,"<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+DOI {name: STRING}
+question:List the properties of nodes that are 3 hops away from DOI with name equal to 10.1016/S0764-4442(00)00217-2!<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (d:DOI {name: ""10.1016/S0764-4442(00)00217-2""})-[*1..3]->(n)
+RETURN n
+```
+
+**Explanation:**
+
+*   **`MATCH (d:DOI {name: ""10.1016/S0764-4442(00)00217-2""})`**: This part of the query finds a node labeled `DOI` with the specific name ""10.1016/S0764-4442(00)00217-2"".  We are assuming this is the starting node.
+*   **`-[*1..3]->(n)`**:  This is the core of the query.  `[*1..3]` specifies a path of length 1 to 3 hops away.  `->` denotes a directed relationship. `(n)` represents the node that is part of the path.
+*   **`RETURN n`**:  This returns the nodes found on the paths of length 1 to 3"
+"MATCH (a:Article)-[:MENTIONS]->(o:Organization) WHERE a.sentiment < 0 WITH o, min(o.revenue) AS minRevenue RETURN o.name AS Organization, minRevenue ORDER BY minRevenue ASC LIMIT 1","```cypher
+MATCH (o:Organization)-[:MENTIONS]->(a:Article)
+WHERE a.sentiment < 0
+ORDER BY o.revenue ASC
+LIMIT 1
+RETURN o.name AS OrganizationName
+```"
+"MATCH (c:Customer)-[:PURCHASED]->(o:Order)-[orders:ORDERS]->(p:Product) WITH c, o, sum(toFloat(orders.unitPrice) * orders.quantity) AS totalOrderValue WITH c, max(totalOrderValue) AS maxTotalOrderValue, collect(o.shipCity) AS shipCities WHERE size(shipCities) > 0 RETURN c.customerID, shipCities[0] AS shipCity ORDER BY maxTotalOrderValue DESC LIMIT 1","```cypher
+MATCH (c:Customer)-[:PURCHASED]->(o:Order)-[:ORDERS]->(p:Product)
+RETURN c.customerID, o.shipCity
+ORDER BY sum(o.unitPrice * o.quantity) DESC
+LIMIT 1
+```"
+MATCH (e:Event) RETURN e.Name ORDER BY e.Year DESC LIMIT 1,"```cypher
+MATCH (e:Event)
+WHERE e.Year = (ORDER BY e.Year DESC LIMIT 1).Year
+RETURN e.Name
+```"
+"MATCH (n:Article) -[r:PUBLISHED_IN]->(m:Journal) WHERE r.pages = '293-299' RETURN n.article_id AS article_id, count(m) AS count","```cypher
+MATCH (a:Article)-[:PUBLISHED_IN]->(j:Journal)
+WHERE a.article_id BETWEEN 293 AND 299
+RETURN a.article_id, count(j) AS journal_count
+```"
+MATCH (e:Entity) WHERE EXISTS {     (e)-[:same_company_as]->(e2:Entity)     WHERE e.company_type IS NOT NULL AND e2.company_type IS NOT NULL AND e.company_type <> e2.company_type } RETURN e,"```cypher
+MATCH (e:Entity)-[:officer_of]->(o:Entity)
+WHERE o.company_type <> e.company_type
+RETURN e.name AS Entity, o.name AS OriginalEntity, e.company_type AS OriginalCompanyType, o.company_type AS NewCompanyType
+```"
+MATCH (o:Order)-[rel:ORDERS]->(p:Product) WHERE rel.quantity > 10 WITH avg(toFloat(rel.unitPrice)) AS avgPrice RETURN avgPrice,"```cypher
+MATCH (p:Product)-[:ORDERS {quantity:>10}]<-[r:PURCHASED]-(c:Customer)
+RETURN avg(p.unitPrice)
+```"
+"MATCH (students:Students) RETURN students.first_name,students.middle_name,students.last_name ORDER BY students.date_first_registered ASC LIMIT 1","```cypher
+MATCH (s:students)
+WHERE s.date_first_registered IS NULL
+RETURN s.first_name, s.middle_name, s.last_name
+```"
+"MATCH (e:Article{title:'Solutions to congruences using sets with the property of Baire'})-[r1]->(n)-[r2]->(m) WHERE TYPE(r1) <> TYPE(r2) RETURN properties(n) AS props1, properties(m) AS props2","<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+Article {title: STRING}
+question:What are the properties of nodes connected to Article where title is Solutions to congruences using sets with the property of Baire, by two different types of relationships?<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (a:Article)-[r1:RELATED_TO]->(n)
+MATCH (a:Article)-[r2:RELATED_TO]->(n2)
+WHERE a.title = ""Solutions to congruences using sets with the property of Baire, by two different types of relationships""
+RETURN n, r1, r2
+```
+
+**Explanation:**
+
+1.  **`MATCH (a:Article)-[r1:RELATED_TO]->(n)`**:  This matches a node labeled `Article` (aliased as `a`) and finds all relationships (`r1`) of type `RELATED_TO` that connect it to other nodes (`n`).  We're interested in the connected nodes and the relationship edges.
+2.  **`MATCH (a:Article)-[r2:RELATED_TO]->(n2)`**: This does the same as above, but finds a *second* relationship `r2` of type `RELATED_TO` that connects the same `Article` node (`a`) to *another* node (`n2`).  This ensures we're finding two different connections.
+3.  **`WHERE a.title = ""Solutions to congru"
+"MATCH (org:Organization {isPublic: true})-[:HAS_CEO]->(ceo:Person) MATCH (ceo)-[:HAS_CHILD]->(child:Person) RETURN ceo.name AS CEO, child.name AS Child","```cypher
+MATCH (p:Person)-[:HAS_CEO]->(o:Organization)
+WHERE o.`isPublic` = true
+RETURN p
+```"
+"MATCH (u1:User {label: ""inchristbl.bsky.social""})-[:INTERACTED]->(u2:User) WHERE u2.area < 3 RETURN u2.label","```cypher
+MATCH (u1:User)-[:INTERACTED]->(u2:User)
+WHERE u2.area < 3
+RETURN u2
+```"
+"MATCH (d:Topic)-[r]->(n) WHERE d.description CONTAINS 'Encompasses techniques for reconstructing images from blurred or incomplete data using regularizers, sparsity, and phase retrieval algorithms, with applications in compressive sensing, neural networks, and optical imaging. Focuses on understanding small-time behavior, limiting transitions, and phase transitions in signal processing and optics, as well as the role of status-dependent behavior and spiking neurons in neural networks. Emphasizes the importance of regularization, penalization, and lasso techniques in image reconstruction and phase retrieval' RETURN n, TYPE(r)","<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+Topic {description: STRING}
+question: List all nodes that are connected to Topic where description contains Encompasses techniques for reconstructing images from blurred or incomplete data using regularizers, sparsity, and phase retrieval algorithms, with applications in compressive sensing, neural networks, and optical imaging. Focuses on understanding small-time behavior, limiting transitions, and phase transitions in signal processing and optics, as well as the role of status-dependent behavior and spiking neurons in neural networks. Emphasizes the importance of regularization, penalization, and lasso techniques in image reconstruction and phase retrieval, along with the type of their relationship with Topic!<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (t:Topic)-[r]->(n)
+WHERE n.description CONTAINS ""Encompasses techniques for reconstructing images from blurred or incomplete data using regularizers, sparsity, and phase retrieval algorithms, with applications in compressive sensing, neural networks, and optical imaging. Focuses on understanding small-time behavior, limiting transitions, and phase transitions in signal processing and optics, as well as the role of status-dependent behavior and spiking neurons in neural networks. Emphasizes the importance of regularization, penalization, and lasso techniques in image reconstruction and phase retrieval, along with the type of their relationship with Topic!""
+RETURN n
+```
+
+**Explanation:**
+
+*   `MATCH (t:Topic)-[r]->(n)`: This line matches a node labeled `Topic` (`t`) and any node (`n`) connected to it via a relationship (`r`).  The `->` indicates a directed relationship, which is a reasonable assumption based on the context.
+*   `WHERE n.description CONTAINS ...`: This filters the results to only include nodes (`n`) where the `description` property contains the full and lengthy description provided in the question.  The `CONTAINS` operator is used to perform a substring search"
+MATCH (e:Entity) WHERE e.country_codes = 'HKG' AND e.service_provider = 'Mossack Fonseca' RETURN e,"```cypher
+MATCH (e:Entity {country_codes: ""HKG"", service_provider: ""Mossack Fonseca""})
+RETURN e
+```"
+MATCH (u1:User)-[:INTERACTED]->(u2:User) WHERE u2.y < -5000 RETURN u1 LIMIT 3,"```cypher
+MATCH (u:User)-[:INTERACTED]->(other:User)
+WHERE other.y < -5000
+RETURN u
+ORDER BY u.y DESC
+LIMIT 3
+```"
+"MATCH (s:Student) RETURN s.Major, COUNT(s) ORDER BY COUNT(s) ASC LIMIT 1","```cypher
+MATCH (s:Student)
+RETURN s.Major, count(s) AS StudentCount
+ORDER BY StudentCount ASC
+LIMIT 1
+```"
+"MATCH (m:Movie) WHERE m.votes IS NOT NULL RETURN m.title, m.votes ORDER BY m.votes DESC LIMIT 5","```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+RETURN m.title AS MovieTitle, COUNT(p) AS NumberOfPeople
+ORDER BY NumberOfPeople DESC
+LIMIT 5
+```"
+"MATCH (u:User) RETURN u.name, u.screen_name, count{(u)-[:FOLLOWS]->(:User)} AS followingCount ORDER BY followingCount DESC LIMIT 3","```cypher
+MATCH (u:User)-[:FOLLOWS]->(f:User)
+RETURN u.name, count(f) AS followers_count
+ORDER BY followers_count DESC
+LIMIT 3
+```"
+"MATCH (me:Me {screen_name: 'neo4j'})-[:INTERACTS_WITH]->(user:User) RETURN user.screen_name, COUNT(*) AS interaction_count ORDER BY interaction_count DESC LIMIT 1","```cypher
+MATCH (u:User {screen_name: ""neo4j""})-[:INTERACTS_WITH]->(target)
+RETURN target
+ORDER BY count(u) DESC
+LIMIT 1
+```"
+MATCH (m:Movie)<-[r:REVIEWED]-(p:Person) WHERE r.summary = 'Pretty funny at times' RETURN m.title,"```cypher
+MATCH (p:Person)-[:REVIEWED]->(m:Movie)
+WHERE p.summary = ""Pretty funny at times""
+RETURN m
+```"
+"MATCH (a:Article {comments:'21 pages, AMS-LaTeX'})-[r:PUBLISHED_IN]->(b:Journal) WHERE ANY(key IN keys(a) WHERE a[key] = b[key]) RETURN b","<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+Article {comments: STRING}
+Journal {}
+
+Relevant relationships are:
+{'start': Article, 'type': PUBLISHED_IN, 'end': Journal }
+question:Which nodes have a common property with Article where comments is 21 pages, AMS-LaTeX and are PUBLISHED_IN linked to a Journal?<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (a:Article)-[r:PUBLISHED_IN]->(j:Journal)
+WHERE a.comments CONTAINS ""21 pages"" AND a.comments CONTAINS ""AMS-LaTeX""
+RETURN a
+```
+
+**Explanation:**
+
+1.  **`MATCH (a:Article)-[r:PUBLISHED_IN]->(j:Journal)`**: This line matches the specified pattern:
+    *   `(a:Article)`:  Finds a node labeled `Article` and assigns it to the variable `a`.
+    *   `-[r:PUBLISHED_IN]->`:  Finds a relationship of type `PUBLISHED_IN` pointing to the `Article` node.
+    *   `(j:Journal)`: Finds a node labeled `Journal` and assigns it to the variable `j`.  This ensures that the article is linked to a journal.
+
+2.  **`WHERE a.comments CONTAINS ""21 pages"" AND a.comments CONTAINS ""AMS-LaTeX""`**:  This line filters the results based on the specified conditions:
+    *   `a.comments CONTAINS ""21 pages""`: Checks if the `comments` property of the `"
+"MATCH (p:Publication) WITH p.Publisher as Publisher, COUNT(p) AS count WHERE count > 1 return Publisher","```cypher
+MATCH (p:Publication)-[:PUBLISHED_BY]->(b:Book)
+WITH p, COLLECT(p.Publisher) AS publishers
+WHERE size(publishers) > 1
+RETURN publishers
+```"
+MATCH (m:Member) RETURN COUNT(DISTINCT m.Level),"```cypher
+MATCH (m:Member)
+RETURN count(DISTINCT m.Level)
+```"
+"MATCH (rust_stream:Stream)-[:PLAYS]->(game:Game {name: ""Rust""}) MATCH (rust_stream)-[:VIP]->(vip_user:User) MATCH (vip_user)-[:VIP]->(other_stream:Stream) MATCH (chatter_user:User)-[:CHATTER]->(other_stream) RETURN DISTINCT chatter_user.name","```cypher
+MATCH (u:User)-[:VIP]->(s:Stream)-[:VIP]->(v:User)
+WHERE s.name CONTAINS ""Rust""
+RETURN DISTINCT u.name
+```"
+MATCH (b:Business)<-[:REVIEWS]-(r:Review) WHERE r.date = date('2018-09-10') RETURN b,"```cypher
+MATCH (business:Business)-[:REVIEWS]-(review:Review)
+WHERE review.date = date()
+RETURN DISTINCT business.name AS businessName
+```"
+MATCH (m:Movie)-[:PRODUCED_BY]->(pc:ProductionCompany {name: 'Pixar Animation Studios'}) WHERE m.budget > 50000000 RETURN m.title ORDER BY m.release_date LIMIT 3,"```cypher
+MATCH (p:ProductionCompany {name: ""Pixar Animation Studios""})-[:PRODUCED_BY]->(m:Movie)
+WHERE m.budget > 5000000
+RETURN m.title
+ORDER BY m.budget DESC
+LIMIT 3
+```"
+"MATCH (targetQuestion:Question {id: 62220505}) WITH targetQuestion.favorites AS targetFavorites MATCH (question:Question) WHERE question.favorites = targetFavorites RETURN question.id, question.text","```cypher
+MATCH (q:Question {id: 62220505})
+RETURN q.favorites AS favorites
+WITH favorites
+MATCH (q:Question)
+WHERE q.favorites = favorites
+RETURN q
+```"
+MATCH (n:Article) WHERE EXISTS { MATCH (n)-[:HAS_CATEGORY]->(:Categories) } RETURN n.title AS title,"```cypher
+MATCH (article:Article)-[:HAS_CATEGORY]->(category:Categories)
+RETURN article.title
+```"
+"MATCH (t:Tweet)-[:MENTIONS]->(u:User {screen_name: 'neo4j'}) WHERE t.favorites > 100 RETURN t.text AS tweet_text, t.favorites AS favorite_count, t.created_at AS created_at","```cypher
+MATCH (u:User {screen_name: ""neo4j""})-[:POSTS]->(t:Tweet)
+WHERE t.favorites > 100
+RETURN t
+```"
+MATCH (n:Article) WHERE n.article_id > 1006 OR n.article_id < 1048 RETURN n LIMIT 8,"```cypher
+MATCH (a:Article)
+WHERE a.article_id > 1006 OR a.article_id < 1048
+RETURN a
+LIMIT 8
+```"
+MATCH (a:Article {title: 'Funds for Consumer Behavior Specialist Infinite An'})-[:MENTIONS]->(o:Organization) RETURN o LIMIT 3,"```cypher
+MATCH (a:Article {title: ""Funds for Consumer Behavior Specialist Infinite An""})-[r:MENTIONS]->(o:Organization)
+RETURN o.name
+ORDER BY r.start LIMIT 3
+```"
+"MATCH (t:Tweet) RETURN t.text, t.favorites ORDER BY t.favorites DESC LIMIT 5","```cypher
+MATCH (u:User)-[:POSTS]->(t:Tweet)
+RETURN t
+ORDER BY t.favorites DESC
+LIMIT 5
+```"
+"MATCH (c:Customer)-[:PURCHASED]->(o:Order)-[:ORDERS]->(p:Product) WITH c, COUNT(DISTINCT p.productID) AS distinctProducts ORDER BY distinctProducts DESC LIMIT 3 RETURN c.companyName AS customerName, distinctProducts","```cypher
+MATCH (c:Customer)-[:PURCHASED]->(o:Order)-[:ORDERS]->(p:Product)
+WITH c, COLLECT(DISTINCT p.productID) AS products
+ORDER BY length(products) DESC
+LIMIT 3
+RETURN c
+```"
+MATCH (o:Order {shipCountry: 'Denmark'})-[:ORDERS]->(p:Product) WITH avg(toFloat(o.discount)) AS averageDiscount RETURN averageDiscount,"```cypher
+MATCH (c:Customer {country: ""Denmark""})-[:PURCHASED]->(o:Order)
+RETURN avg(o.discount)
+```"
+"MATCH (p:Person)<-[:HAS_CEO]-(o:Organization) WHERE o.revenue IS NOT NULL RETURN p.name AS ceo, o.name AS company, o.revenue AS revenue ORDER BY o.revenue DESC LIMIT 5","```cypher
+MATCH (p:Person)-[:HAS_CEO]->(o:Organization)
+RETURN p.name AS CEO, o.name AS Organization, o.revenue AS Revenue
+ORDER BY o.revenue DESC
+LIMIT 5
+```"
+"MATCH (a:Article{comments:'26 pages, revised, to appear in Advances in Cryptology -- Asiacrypt   2005'})-[:HAS_CATEGORY]->(c:Categories)-[r]->(n) RETURN n","```cypher
+MATCH (a:Article)-[r:HAS_CATEGORY]->(c:Categories)
+WHERE a.comments = ""26 pages, revised, to appear in Advances in Cryptology -- Asiacrypt 2005""
+RETURN c
+```"
+MATCH (m:Movie) WHERE m.votes > 100 RETURN m.title,"```cypher
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)
+WHERE m.votes > 100
+RETURN m.title
+```"
+"MATCH (pc:ProductionCompany)-[:PRODUCED_BY]-(m:Movie) WHERE m.revenue IS NOT NULL RETURN pc.name, sum(m.revenue) AS total_revenue ORDER BY total_revenue DESC LIMIT 3","```cypher
+MATCH (p:ProductionCompany)-[:PRODUCED]->(m:Movie)
+WITH p, sum(m.revenue) AS total_revenue
+ORDER BY total_revenue DESC
+LIMIT 3
+RETURN p.name, total_revenue
+```"
+MATCH (s:Stream)<-[:VIP]-(:User) RETURN s.name AS stream_name ORDER BY s.total_view_count DESC LIMIT 3,"```cypher
+MATCH (s:Stream)-[:VIP]->(u:User)
+RETURN s.name AS StreamName
+ORDER BY s.total_view_count DESC
+LIMIT 3
+```"
+"MATCH (s:Student) WHERE s.Fname =~ ""(?i).*a.*"" RETURN DISTINCT s.Fname","```cypher
+MATCH (s:Student)
+WHERE s.Fname CONTAINS ""a""
+RETURN s.Fname
+```"
+"MATCH (e1:Entity {name: ""Deutsche Bank AG""}) MATCH (e1)-[:COUNTRY]->(c:Country) MATCH (c)<-[:COUNTRY]-(e2:Entity) MATCH (e2)-[:ORIGINATOR]->(f:Filing) WITH avg(f.amount) AS averageAmount RETURN averageAmount","```cypher
+MATCH (e:Entity {name: ""Deutsche Bank AG""})-[:ORIGINATOR]->(f:Filing)
+RETURN avg(f.amount)
+```"
+MATCH (c:Customer)-[:PURCHASED]->(o:Order)-[oi:ORDERS]->(p:Product) WHERE c.country = 'USA' WITH avg(toFloat(oi.unitPrice)) AS avgPrice RETURN avgPrice,"```cypher
+MATCH (c:Customer)-[:PURCHASED]->(o:Order)-[:ORDERS]->(p:Product)
+WHERE o.shipCountry = ""USA""
+RETURN avg(p.unitPrice)
+```"
+MATCH (n:Topic) WHERE n.cluster > 10 OR n.cluster < 7 RETURN n LIMIT 8,"```cypher
+MATCH (t:Topic)
+WHERE t.cluster > 10 OR t.cluster < 7
+RETURN t
+LIMIT 8
+```"
+"MATCH (b:UpdateDate)-[r]->(n) WHERE b.update_date = '2009-10-31' RETURN properties(b) AS UpdateDate_props, properties(n) AS props","<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+UpdateDate {update_date: DATE}
+question:Identify nodes that are connected to UpdateDate where update_date is 2009-10-31 and list their properties, including those of UpdateDate!<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (n)-[r]->(ud:UpdateDate)
+WHERE ud.update_date = date('2009-10-31')
+RETURN n, ud
+```
+
+**Explanation:**
+
+*   **`MATCH (n)-[r]->(ud:UpdateDate)`**:  This clause matches any node `n` connected to an `UpdateDate` node `ud` through any relationship `r`.  The `->` indicates the direction of the relationship (outgoing from `n`).
+*   **`WHERE ud.update_date = date('2009-10-31')`**: This clause filters the results to only include `UpdateDate` nodes where the `update_date` property is equal to '2009-10-31'.  The `date()` function is used to correctly compare the date string to the date property.
+*   **`RETURN n, ud`**:  This clause returns the nodes `n` and the `UpdateDate` nodes `ud` that satisfy the conditions.  This will show both the node connecting to the `UpdateDate` and the `UpdateDate` node itself, allowing access to all properties"
+"MATCH (m:Movie)-[r:HAS_KEYWORD]->(k:Keyword) RETURN m.title AS movie, count(r) AS num_keywords ORDER BY num_keywords DESC LIMIT 10","```cypher
+MATCH (m:Movie)-[:HAS_KEYWORD]->(k:Keyword)
+RETURN m.title AS MovieTitle, count(k) AS KeywordCount
+ORDER BY KeywordCount DESC
+LIMIT 10
+```"
+"MATCH (m:Movie) MATCH (m)-[:ORIGINAL_LANGUAGE]->(l:Language) WITH l, count(m) AS movieCount ORDER BY movieCount DESC RETURN l.name AS language, movieCount LIMIT 1","```cypher
+MATCH (m:Movie)-[:ORIGINAL_LANGUAGE]->(l:Language)
+RETURN l.name, count(m) AS count
+ORDER BY count DESC
+LIMIT 1
+```"
+MATCH (n:Author) WHERE n.last_name = 'Neeman' OR n.first_name IS NOT NULL RETURN DISTINCT n.first_name AS first_name,"```cypher
+MATCH (a:Author)
+WHERE a.last_name = 'Neeman' OR a.first_name IS NOT NULL
+RETURN DISTINCT a.first_name
+```"
+MATCH (a:Categories{category_id:'4b7053a7def1fb0250a0e83ebd2f9a7b'})-[*3]->(n) RETURN labels(n) AS FarNodes,"<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+Categories {category_id: STRING}
+question:List nodes that are 3 hops away from Categories for which category_id=4b7053a7def1fb0250a0e83ebd2f9a7b!<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (c:Categories {category_id: '4b7053a7def1fb0250a0e83ebd2f9a7b'})-[:CONNECTED_TO*]->(n)
+RETURN n
+```
+
+**Explanation:**
+
+*   **`MATCH (c:Categories {category_id: '4b7053a7def1fb0250a0e83ebd2f9a7b'})`**: This part of the query finds a node labeled `Categories` with the specific `category_id` provided in the question. This is the starting point (hop 0) for our search.
+*   **`-[:CONNECTED_TO*]->`**:  This defines a path with up to 3 hops.  `CONNECTED_TO` is assumed to be a relationship type connecting Categories to other nodes. The `*` quantifier means ""zero or more hops"".  The direction of the arrow indicates that we're moving *from* the `Categories` node *to* the other nodes.
+*   **`(n)`**:  This simply represents any node that's part of the path found in the previous part"
+MATCH (n:Article) -[:PUBLISHED_IN{pages: '521-554'}]->(m:Journal) WHERE m.abstract < date('2020-12-31') RETURN avg(m.name) AS avg_name,"```cypher
+MATCH (a:Article)-[:PUBLISHED_IN]->(j:Journal)
+WHERE j.name IS NOT NULL AND
+      j.pages >= '521' AND j.pages <= '554' AND
+      a.abstractDate < '2021-01-01'
+RETURN avg(j.name)
+```"
+"MATCH (p:Person)-[:PRODUCED]->(m:Movie) WHERE m.tagline IS NOT NULL WITH p, count(DISTINCT m.tagline) AS distinctTaglines ORDER BY distinctTaglines DESC LIMIT 3 RETURN p.name, distinctTaglines","```cypher
+MATCH (p:Person)-[:PRODUCED]->(m:Movie)
+RETURN p.name AS Producer, count(m) AS NumberOfMovies
+ORDER BY NumberOfMovies DESC
+LIMIT 3
+```"
+MATCH (n:Keyword) WHERE n.key_id =~'a8.*' RETURN n,"```cypher
+MATCH (k:Keyword)
+WHERE k.key_id endsWith ""a8!""
+RETURN k
+```"
+MATCH (e:Editor) WHERE NOT (:Journal)-[:EDited_BY]->(e) RETURN e.Name,"```cypher
+MATCH (e:Editor)
+WHERE NOT e.id IN (
+  MATCH (j:Journal)
+  RETURN DISTINCT j.Editor_ID
+)
+RETURN e.Name
+```"
+"MATCH (T1:RepairAssignment)-[:ASSIGNED_TO]->(T3:Technician), (T1)-[:ASSIGNED_TO]->(T2:Machine) RETURN T3.Name ORDER BY T2.quality_rank","```cypher
+MATCH (t:Technician)-[:ASSIGNED_TO]->(ra:RepairAssignment)-[:ASSIGNED_TO]->(m:Machine)
+RETURN t.Name AS TechnicianName, m.quality_rank
+ORDER BY m.quality_rank ASC
+```"
+MATCH (n:Topic) WHERE n.description IS NULL RETURN n LIMIT 8,"```cypher
+MATCH (t:Topic)
+WHERE t.description IS NULL OR t.description = ''
+RETURN t
+LIMIT 8
+```
+
+**Explanation:**
+
+*   **`MATCH (t:Topic)`**: This line matches all nodes labeled `Topic` and assigns them to the variable `t`.
+*   **`WHERE t.description IS NULL OR t.description = ''`**: This is the core of the query.  It filters the matched nodes to only include those where the `description` property is either `NULL` (meaning no value is assigned) or an empty string (`''`).
+*   **`RETURN t`**:  This line returns the nodes that satisfy the `WHERE` condition.
+*   **`LIMIT 8`**: This line restricts the result set to only the first 8 nodes that match the criteria."
+MATCH (q:Question) WHERE q.createdAt = datetime('2020-06-05T21:49:16Z') RETURN q,"```cypher
+MATCH (q:Question)
+WHERE q.createdAt = ""2020-06-05T21:49:16Z""
+RETURN q
+```"
+MATCH (m:Movie) RETURN m,"```cypher
+MATCH (p:Person)-[:DIRECTED]->(m:Movie)
+WHERE m.budget > 100000000
+RETURN p.name
+```"
+"MATCH (r:Review) WITH r ORDER BY r.stars DESC, r.date ASC LIMIT 3 RETURN r.reviewId, r.text, r.stars, r.date","```cypher
+MATCH (u:User)-[:WROTE]->(r:Review)
+WHERE r.stars IS NOT NULL
+RETURN r
+ORDER BY r.stars DESC
+LIMIT 3
+```"
+"MATCH (e:Entity) WHERE e.jurisdiction = 'SAM' AND e.struck_off_date CONTAINS '2013' RETURN e.name AS entity_name, e.struck_off_date AS struck_off_date","```cypher
+MATCH (e:Entity)-[:registered_address]->(a:Address)
+WHERE a.jurisdiction = ""Samoa"" AND e.struck_off_date <= ""2013-02-15""
+RETURN e
+```"
+MATCH (u:User {name: 'Will'})-[:WROTE]->(r:Review)-[:REVIEWS]->(b:Business)-[:IN_CATEGORY]->(c:Category) RETURN DISTINCT c.name AS categories,"```cypher
+MATCH (user:User {name: ""Will""})-[:WROTE]->(review:Review)<-[:REVIEWS]-(business:Business)
+RETURN business.name AS BusinessName
+OPTIONAL MATCH (review:Review)-[:IN_CATEGORY]->(category:Category)
+RETURN category.name AS Category
+```"
+MATCH (p:Person)-[:ACTED_IN]->(m:Movie)<-[:DIRECTED]-(p) RETURN m.title LIMIT 3,"```cypher
+MATCH (p:Person)-[:DIRECTED]->(m:Movie)
+WITH m
+ORDER BY m.title ASC
+LIMIT 3
+RETURN m.title AS MovieTitle
+```"
+MATCH p=(a:Article{article_id:'1048'})-[*]->(d:Keyword{name:'tree (optimality criteria: minimum mean-squared error)  alternative keyword suggestions: - multiscale superpopulation models - independent innovations trees - water-'}) RETURN count(p),"<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+Article {article_id: INTEGER}
+Keyword {name: STRING}
+question:How many paths are there between Article where article_id is 1048 and Keyword, for which name equals tree (optimality criteria: minimum mean-squared error)
+
+alternative keyword suggestions:
+- multiscale superpopulation models
+- independent innovations trees
+- water-?<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (a:Article {article_id: 1048})-[r]->(k:Keyword {name: ""tree""})
+RETURN COUNT(r) AS path_count
+```
+
+**Explanation:**
+
+*   **`MATCH (a:Article {article_id: 1048})-[r]->(k:Keyword {name: ""tree""})`**: This is the core of the query.  It finds a path between an `Article` node with `article_id` equal to 1048 and a `Keyword` node where the `name` is ""tree"".
+    *   `(a:Article {article_id: 1048})`: This part matches a node labeled `Article` with the `article_id` property set to 1048.
+    *   `-[r]->`: This specifies that there's a relationship `r` between the `Article` and `Keyword` nodes.  The direction `-[r]->` indicates a path from Article to Keyword.
+    *   `(k:Keyword {name: ""tree""})`: This part matches a node labeled `Keyword` with the `name` property set to"
+MATCH (a:Article)-[:MENTIONS]->(o:Organization) WHERE a.sentiment < 0 AND exists {   (a)-[:HAS_CHUNK]->(c:Chunk)   WHERE c.text CONTAINS 'revenue decrease' OR c.text CONTAINS 'revenue declined' } RETURN DISTINCT o.name AS organization,"```cypher
+MATCH (o:Organization)-[:MENTIONS]->(a:Article)
+WITH o, a
+WHERE a.summary CONTAINS ""decrease""
+RETURN o.name AS OrganizationName, o.revenue AS Revenue
+```"
+"MATCH (f:Filing)-[:ORIGINATOR]->(e:Entity)-[:COUNTRY]->(c:Country) WITH c.name AS country, COUNT(DISTINCT e.id) AS originator_count ORDER BY originator_count DESC LIMIT 3 RETURN country, originator_count","```cypher
+MATCH (f:Filing)-[:ORIGINATOR]->(e:Entity)
+WITH e.country, count(e) AS originator_count
+ORDER BY originator_count DESC
+LIMIT 3
+RETURN e.country, originator_count
+```"
+MATCH (q:Question)-[:TAGGED]->(t:Tag {name: 'graphql'}) WHERE q.createdAt >= datetime('2020-06-05T00:00:00Z') RETURN count(q) AS NumberOfQuestions,"```cypher
+MATCH (q:Question)-[:TAGGED]->(t:Tag)
+WHERE t.name = 'graphql' AND q.createdAt >= date('2020-06-05')
+RETURN COUNT(q)
+```"
+MATCH (e:Entity)-[:registered_address]->(a:Address) WHERE a.countries = 'Hong Kong' RETURN e LIMIT 5,"```cypher
+MATCH (e:Entity)-[:registered_address]->(a:Address)
+WHERE a.countries CONTAINS 'Hong Kong'
+RETURN e.name AS Entity, a.address AS Address
+LIMIT 5
+```"
+MATCH (e:Entity)-[:COUNTRY]->(c:Country) WHERE c.code = 'CHN' WITH e MATCH (e)-[:FILED]->(f:Filing) RETURN avg(f.amount),"```cypher
+MATCH (e:Entity {country: 'CHN'})-[:FILED]->(f:Filing)
+RETURN avg(f.amount)
+```"
+"MATCH (a:Article{comments:'19 pages, AMSLatex, references added'})-[*]->(n) RETURN DISTINCT properties(n) AS Properties","<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+Article {comments: STRING}
+question:Enumerate the properties of nodes that are either directly or indirectly connected to Article for which comments is 19 pages, AMSLatex, references added!<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (a:Article)-[r]->(n)
+WHERE n.comments = ""19 pages, AMSLatex, references added!""
+RETURN n
+```
+
+**Explanation:**
+
+*   **`MATCH (a:Article)-[r]->(n)`**: This part of the query matches a node labeled `Article` (aliased as `a`) and any node (`n`) that is directly connected to it via a relationship (`r`).  The `->` indicates a directed relationship.
+*   **`WHERE n.comments = ""19 pages, AMSLatex, references added!""`**: This filters the matched nodes to only include those where the `comments` property is exactly equal to the given string.  Case sensitivity is important here.
+*   **`RETURN n`**: This returns the nodes (`n`) that satisfy the conditions in the `MATCH` and `WHERE` clauses.  This will return the nodes connected to the article that have the specified comments.
+
+**Important Considerations and potential improvements:**
+
+*   **Case Sensitivity:**  The `WHERE` clause uses an exact string match.  If the comment string might have variations in capitalization, you might need to use a case-insensitive"
+"MATCH (a:Report{report_id:'dd0a54fea06e7b7a384741aac9313d65'})-[r]->() RETURN COUNT(DISTINCT TYPE(r)) AS rels, TYPE(r)","```cypher
+MATCH (r:Report)-[:ORIGINATES_FROM]->(n)
+WHERE r.report_id = 'dd0a54fea06e7b7a384741aac9313d65'
+RETURN count(DISTINCT n)
+```"
+MATCH (b:Business)-[:IN_CATEGORY]->(c:Category) WHERE b.city = 'San Mateo' AND c.name = 'Coffee' RETURN b.name,"```cypher
+MATCH (b:Business)
+WHERE b.city = 'San Mateo' AND b IN_CATEGORY {name: 'Coffee'}
+RETURN b.name
+```"
+MATCH (q:Question {answered: true}) RETURN q ORDER BY q.createdAt LIMIT 3,"```cypher
+MATCH (u:User)-[:ASKED]->(q:Question)
+WHERE q.answered = true
+RETURN q
+ORDER BY q.createdAt
+LIMIT 3
+```"
+MATCH (u:User) WHERE u.size < 2.0 RETURN u ORDER BY u.size DESC LIMIT 5,"```cypher
+MATCH (u:User)
+WHERE u.size < 2.0
+ORDER BY u.size DESC
+LIMIT 5
+RETURN u
+```"
+"MATCH (u:User {screen_name: 'neo4j'})-[:POSTS]->(t:Tweet)-[:MENTIONS]->(mentioned:User) RETURN mentioned.screen_name, count(t) AS mentions_count ORDER BY mentions_count DESC","```cypher
+MATCH (u:User {screen_name: ""neo4j""})-[:POSTS]->(t:Tweet)-[:MENTIONS]->(otherUser:User)
+RETURN otherUser
+ORDER BY count(t) DESC
+LIMIT 10
+```"
+MATCH (o:Organization)<-[:MENTIONS]-(a:Article) WHERE o.name CONTAINS 'Accenture' WITH avg(a.sentiment) AS averageSentiment RETURN averageSentiment,"```cypher
+MATCH (o:Organization {name: ""Accenture""})-[r:MENTIONS]->(a:Article)
+RETURN avg(a.sentiment)
+```"
+"MATCH (c1:Character)-[i:INTERACTS45]->(c2:Character) WHERE i.weight > 50 RETURN c1.name AS character1, c2.name AS character2, i.weight AS weight","```cypher
+MATCH (c1:Character)-[:INTERACTS45]->(c2:Character)
+WHERE c2.weight > 50
+RETURN c2
+```"
+"MATCH (u:User {name: ""Omar Huffman""})-[:RATED]->(m:Movie) WITH u,  substring(m.released, 1, 4) AS userBirthYear MATCH (movie:Movie) WHERE substring(movie.released, 1, 4) = userBirthYear RETURN DISTINCT movie.title","```cypher
+MATCH (user:User {userId: ""1""})
+WITH user
+MATCH (movie:Movie)
+WHERE movie.year = (date() as t) and t = (user.born as Date)
+RETURN movie.title
+```"
+MATCH (d:Director)-[:DIRECTED]->(m:Movie) WHERE m.imdbRating >= 9 RETURN DISTINCT d.name LIMIT 5,"```cypher
+MATCH (director:Director)-[:DIRECTED]->(movie:Movie)
+WHERE movie.imdbRating >= 9
+RETURN director.name
+ORDER BY director.name
+LIMIT 5
+```"
+MATCH (p:Person)-[r:ACTED_IN]->(m:Movie) WHERE p.name = 'Keanu Reeves' AND m.title = 'The Matrix' RETURN r.roles AS roles,"```cypher
+MATCH (p:Person {name: ""Keanu Reeves""})-[:ACTED_IN]->(m:Movie {title: ""The Matrix""})
+RETURN p.name AS Actor, m.title AS Movie, p.roles
+```"
+MATCH (a:Article{title:'Notes for a Quantum Index Theorem'})-[:PUBLISHED_IN]->(c:Journal)-[r]->(n) RETURN n,"```cypher
+MATCH (a:Article {title: ""Notes for a Quantum Index Theorem""})-[r:PUBLISHED_IN]->(j:Journal)
+RETURN j
+```"
+MATCH (n:Author) WHERE n.author_id IS NULL RETURN count(n),"```cypher
+MATCH (a:Author)
+WHERE a.author_id IS NULL
+RETURN COUNT(a)
+```"
+"MATCH (a:Article{comments:'Published by Geometry and Topology at   http://www.maths.warwick.ac.uk/gt/GTVol4/paper14.abs.html'})-[r]->() RETURN TYPE(r) AS Relations, COUNT(r) AS Counts","<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+Article {comments: STRING}
+question:List the types of relationships and their counts connected to Article for which comments is Published by Geometry and Topology at
+  http://www.maths.warwick.ac.uk/gt/GTVol4/paper14.abs.html!<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (a:Article)-[r]->(n)
+WHERE a.comments CONTAINS ""Published by Geometry and Topology""
+RETURN DISTINCT r.type AS RelationshipType, COUNT(r) AS RelationshipCount
+```
+
+**Explanation:**
+
+*   **`MATCH (a:Article)-[r]->(n)`**: This part of the query matches a node labeled `Article` (aliased as `a`) and an outgoing relationship `r` to any node `n`.  This finds all relationships connected to an Article node.
+*   **`WHERE a.comments CONTAINS ""Published by Geometry and Topology""`**: This is the crucial filtering part.  It checks if the `comments` property of the `Article` node contains the string ""Published by Geometry and Topology"". This satisfies the context of the provided URL.  The `CONTAINS` operator is a simple way to check for substring presence.
+*   **`RETURN DISTINCT r.type AS RelationshipType, COUNT(r) AS RelationshipCount`**: This part specifies what to return.
+    *   `r.type`:  Retrieves the type of the relationship (`r`).
+    *   `AS RelationshipType`:  Assigns a more descriptive"
+"MATCH (d:Director)-[:DIRECTED]->(m:Movie) WITH d, collect(DISTINCT m.languages) AS languages WHERE size(languages) > 1 RETURN d.name, languages ORDER BY size(languages) DESC LIMIT 3","```cypher
+MATCH (director:Director)-[:DIRECTED]->(movie:Movie)
+WITH director, count(distinct movie.languages) AS languageCount
+WHERE languageCount > 1
+RETURN director.name AS DirectorName, languageCount
+ORDER BY languageCount DESC
+LIMIT 3
+```"
+MATCH (a:Article{title:'Classification of Subsystems for Local Nets with Trivial Superselection   Structure'})-[r:PUBLISHED_IN {pages :'89-106'}]->(b:Journal) WHERE ANY(key IN keys(a) WHERE a[key] = b[key]) RETURN b,"```cypher
+MATCH (a:Article)-[r:PUBLISHED_IN]->(j:Journal)
+WHERE a.title = 'Classification of Subsystems for Local Nets with Trivial Superselection
+  Structure' AND r.pages = '89-106'
+RETURN a
+```"
+"MATCH (s:Stream)-[:HAS_TEAM]->(t:Team) WHERE t.createdAt < datetime('2015-01-01T00:00:00Z') RETURN s.name AS streamName, s.url AS streamURL ORDER BY t.createdAt LIMIT 3","```cypher
+MATCH (s:Stream)-[:HAS_TEAM]->(t:Team)
+WHERE t.createdAt < '2015-01-01'
+RETURN s.name, s.url
+ORDER BY s.createdAt
+LIMIT 3
+```"
+"MATCH (a:Article{title:'The Gervais-Neveu-Felder equation for the Jordanian quasi-Hopf   U_{h;y}(sl(2)) algebra'})-[r]->(n), (n)-[s]->(m) RETURN labels(n) AS Interim, labels(m) AS Target","<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+Article {title: STRING}
+question:Which nodes are connected to Article where title is The Gervais-Neveu-Felder equation for the Jordanian quasi-Hopf
+  U_{h;y}(sl(2)) algebra, and also to another node?<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (a:Article)-[:CONNECTED_TO]->(b)
+WHERE a.title = 'The Gervais-Neveu-Felder equation for the Jordanian quasi-Hopf U_{h;y}(sl(2)) algebra'
+AND b.type != 'Article' //Ensure it's not an article itself
+RETURN b
+```
+
+**Explanation:**
+
+*   `MATCH (a:Article)-[:CONNECTED_TO]->(b)`: This part of the query matches a node labeled `Article` (aliased as `a`) and another node (aliased as `b`) connected by a relationship labeled `CONNECTED_TO`.
+*   `WHERE a.title = 'The Gervais-Neveu-Felder equation for the Jordanian quasi-Hopf U_{h;y}(sl(2)) algebra'` :  This filters the matches to only include those where the `title` property of the `Article` node (`a`) matches the specified string.  The string is case-sensitive.
+*   `AND b.type != 'Article'`: This ensures that the second node `b` is not itself an article, to avoid returning the article connected to itself. This is important"
+MATCH (n:Topic) WHERE n.label <> 'Population Dynamics_0' RETURN DISTINCT n.description AS description,"```cypher
+MATCH (t:Topic)
+WHERE t.label <> 'Population Dynamics_0'
+RETURN DISTINCT t.description
+```"
+MATCH (p:Person)-[:WROTE]->(m:Movie) WHERE (p)-[:DIRECTED]->(m) RETURN DISTINCT p.name,"```cypher
+MATCH (p:Person)-[:DIRECTED]->(m:Movie)
+WITH p, m
+MATCH (p2:Person)-[:WROTE]->(m2:Movie)
+WHERE m = m2 AND p <> p2
+RETURN p
+```"
+"MATCH (p:Person)-[:DIRECTED]->(m:Movie) WHERE m.votes > 200 WITH p, count(m) AS num_movies ORDER BY num_movies DESC LIMIT 5 RETURN p.name AS director, num_movies","```cypher
+MATCH (p:Person)-[:DIRECTED]->(m:Movie)
+WHERE m.votes > 200
+RETURN p.name
+ORDER BY m.votes DESC
+LIMIT 5
+```"
+"MATCH (a:AllDocument) MATCH (b:RefCalendar) WHERE a.Date_Stored = b.Calendar_Date RETURN a.Date_Stored, b.Day_Number","```cypher
+MATCH (d:AllDocument)
+RETURN d.Day_Number, d.Date_Stored
+```"
+"MATCH (f:Filing)-[:BENEFITS|:CONCERNS|:ORIGINATOR]->(e:Entity)-[:COUNTRY]->(c:Country) WHERE f.amount < 500000 WITH c, count(f) AS num_filings ORDER BY num_filings DESC LIMIT 5 RETURN c.name AS country_name, num_filings","```cypher
+MATCH (f:Filing)-[:BENEFITS]->(e:Entity)
+WHERE f.amount < 500000
+WITH f, COUNT(f) AS filingCount
+MATCH (f:Filing)-[:ORIGINATOR]->(e:Entity)
+WHERE f.amount < 500000
+WITH f, COUNT(f) AS filingCount
+OPTIONAL MATCH (f:Filing)-[:FILED]->(e:Entity)
+WHERE f.amount < 500000
+WITH f, COUNT(f) AS filingCount
+GROUP BY f.Filing.beneficiary_bank_country
+ORDER BY filingCount DESC
+LIMIT 5
+RETURN f.Filing.beneficiary_bank_country AS Country, filingCount
+```"
+MATCH (u:User {name: 'itsbigchase'}) MATCH (s:Stream) WHERE exists{(u)-[:MODERATOR]->(s)} AND exists{(u)-[:CHATTER]->(s)} RETURN s,"```cypher
+MATCH (u:User {name: ""itsbigchase""})-[:MODERATOR]->(s:Stream)-[:CHATTER]->(u2:User)
+RETURN u, s, u2
+```"
+MATCH (n:Article {title: 'On the collision between two PNG droplets'}) -[:HAS_KEY]- (m:Keyword) WHERE m.name STARTS WITH 'k' RETURN m,"```cypher
+MATCH (a:Article)-[r:HAS_KEY]->(k:Keyword)
+WHERE k.name STARTS WITH 'k'
+AND a.title CONTAINS ""On the collision between two PNG droplets!""
+RETURN k.name AS KeywordName
+```"
+MATCH (p:Product) RETURN avg(p.pages_per_minute_color),"```cypher
+MATCH (p:Product)
+RETURN p.pages_per_minute_color
+```"
+MATCH (s:Supplier)-[:SUPPLIES]->(p:Product) WHERE p.unitsInStock > 80 RETURN s,"```cypher
+MATCH (s:Supplier)-[:SUPPLIES]->(p:Product)
+WHERE p.unitsInStock > 80
+RETURN s.companyName
+```"
+MATCH (s:Storm) WHERE NOT EXISTS((s)-[:AFFECTS]->(:Region)) RETURN s.Name,"```cypher
+MATCH (s:Storm)-[:AFFECTS]->()
+WHERE NOT s.AFFECTS.contains(n:Region)
+RETURN s.Name
+```"
+"MATCH (a:Article{abstract:'  Determining contributions by sub-portfolios or single exposures to portfolio-wide economic capital for credit risk is an important risk measurement task. Often economic capital is measured as Value-at-Risk (VaR) of the portfolio loss distribution. For many of the credit portfolio risk models used in practice, the VaR contributions then have to be estimated from Monte Carlo samples. In the context of a partly continuous loss distribution (i.e. continuous except for a positive point mass on zero), we investigate how to combine kernel estimation methods with importance sampling to achieve more efficient (i.e. less volatile) estimation of VaR contributions. '})-[:HAS_CATEGORY]->(c:Categories)-[r]->(n) RETURN n","```cypher
+MATCH (a:Article)-[:HAS_CATEGORY]->(c:Categories)
+WHERE a.abstract = ""Determining contributions by sub-portfolios or single exposures to portfolio-wide economic capital for credit risk is an important risk measurement task. Often economic capital is measured as Value-at-Risk (VaR) of the portfolio loss distribution. For many of the credit portfolio risk models used in practice, the VaR contributions then have to be estimated from Monte Carlo samples. In the context of a partly continuous loss distribution (i.e. continuous except for a positive point mass on zero), we investigate how to combine kernel estimation methods with importance sampling to achieve more efficient (i.e. less volatile) estimation of VaR contributions.""
+RETURN c
+```"
+MATCH (f:Filing)-[:ORIGINATOR]->(e:Entity) WHERE f.originator_bank = 'CIMB Bank Berhad' AND f.amount > 500000 RETURN e.name AS originator_entity_name ORDER BY f.begin LIMIT 3,"```cypher
+MATCH (f:Filing)-[:ORIGINATOR]->(e:Entity)
+WHERE f.originator_bank = 'CIMB Bank Berhad' AND f.amount > 500000
+RETURN e
+ORDER BY e.name ASC LIMIT 3
+```"
+"MATCH (a:DOI{doi_id:'6ecd77a291d325cb3e01160880d88c69'}), (b:Journal{journal_id:'79942321e19994e38ad2e372af21c893'}) RETURN EXISTS((a)-[*]-(b)) AS pathExists","<bos><start_of_turn>user
+Given the context, generate a Cypher query for the following question
+context:Graph schema: Relevant node labels and their properties (with datatypes) are:
+DOI {doi_id: STRING}
+Journal {journal_id: STRING}
+question:Is there a path connecting DOI where doi_id is 6ecd77a291d325cb3e01160880d88c69 and Journal, for which journal_id is 79942321e19994e38ad2e372af21c893?<end_of_turn>
+<start_of_turn>model
+```cypher
+MATCH (d:DOI {doi_id: ""6ecd77a291d325cb3e01160880d88c69""})-[r]->(j:Journal {journal_id: ""79942321e19994e38ad2e372af21c893""})
+RETURN d, j, r
+```
+
+**Explanation:**
+
+*   **`MATCH (d:DOI {doi_id: ""6ecd77a291d325cb3e01160880d88c69""})`**:  This part of the query finds a node with the label `DOI` and the property `doi_id` equal to the specified value ""6ecd77a291d325cb3e01160880d88c69"".  This node is aliased as `d`.
+*   **`-[r]->`**: This specifies a relationship `r` connecting the `DOI` node to another node. The `->` indicates the direction of the relationship"
+"MATCH (s:Stream)-[:PLAYS]->(g:Game) WITH g, count(DISTINCT s) AS streamCount WHERE streamCount > 5 RETURN g.name AS Game, streamCount","```cypher
+MATCH (s:Stream)-[:PLAYS]->(g:Game)
+WITH s, COLLECT(DISTINCT g.name) AS games
+WHERE size(games) > 5
+RETURN games
+```"
+MATCH (p:Product)-[:PART_OF]->(c:Category) WHERE p.unitPrice < 10 RETURN DISTINCT c.categoryName,"```cypher
+MATCH (c:Category)-[:PART_OF]->(p:Product)
+WHERE p.unitPrice < 10
+RETURN c.categoryName
+```"
+"MATCH (u:User)-[:ASKED]->(q:Question) WHERE u.reputation > 1000 WITH u, COUNT(q) AS question_count ORDER BY question_count DESC LIMIT 1 RETURN u.display_name AS user, u.reputation AS reputation, question_count","```cypher
+MATCH (u:User)-[:ASKED]->(q:Question)
+WHERE u.reputation > 1000
+RETURN u.display_name AS UserDisplayName, count(q) AS NumberOfQuestions
+ORDER BY NumberOfQuestions DESC
+```"
+"MATCH (o:Organization)-[:IN_CITY]->(c:City)-[:IN_COUNTRY]->(country:Country) WHERE o.motto IS NOT NULL AND o.motto <> """" RETURN DISTINCT country.name AS Country","```cypher
+MATCH (o:Organization {motto: <>})
+OPTIONAL MATCH (o)-[:IN_COUNTRY]->(c:Country)
+RETURN c.name AS Country
+```"
+MATCH (u:User)-[:WROTE]->(r:Review)-[:REVIEWS]->(b:Business) WHERE b.address CONTAINS 'Main St' RETURN DISTINCT u.name,"```cypher
+MATCH (u:User)-[:WROTE]->(r:Review)
+MATCH (b:Business)
+WHERE b.address = '301 E Main St'
+WITH b, COLLECT(u) AS users
+RETURN b.name AS BusinessName, users AS Users
+```"
+MATCH (org:Organization)-[:IN_CITY]->(city:City) WHERE city.name = 'Rome' WITH sum(org.nbrEmployees) AS totalEmployees RETURN totalEmployees,"```cypher
+MATCH (o:Organization {summary: ""Software company based in Rome, Metropolitan City ""})
+RETURN count(o)
+```"
